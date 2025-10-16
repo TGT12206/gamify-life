@@ -1,5 +1,6 @@
 import { Skill } from 'base-classes/skill';
 import { HTMLHelper } from 'html-helper';
+import { MediaPathModal } from 'modals/media-path-modal';
 import { Notice, setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
 
 export const VIEW_TYPE_SKILL = 'skill';
@@ -16,7 +17,7 @@ export class SkillView extends TextFileView {
 	unitDiv: HTMLDivElement;
 	subskillDiv: HTMLDivElement;
 
-	get vault() {
+	private get vault() {
 		return this.app.vault;
 	}
 
@@ -56,7 +57,7 @@ export class SkillView extends TextFileView {
 	private Display(data: string) {
 		this.ParseAndReassignData(data);
 		this.contentEl.empty();
-		this.mainDiv = this.contentEl.createDiv();
+		this.mainDiv = this.contentEl.createDiv('gl-main');
 
 		const mainDiv = this.mainDiv;
 
@@ -91,7 +92,7 @@ export class SkillView extends TextFileView {
 	/**
 	 * Creates a div element showing the name of the parent and
 	 * a button that opens the parent file. If there is no parent,
-	 * this function empties the div it is given.
+	 * this function just empties the div.
 	 */
 	private async DisplayParentSkill() {
 		const div = this.parentSkillDiv;
@@ -136,6 +137,7 @@ export class SkillView extends TextFileView {
 	private DisplayProgress() {
 		const div = this.progressDiv;
 		div.empty();
+		
 	}
 
 	/**
@@ -145,6 +147,20 @@ export class SkillView extends TextFileView {
 	private DisplayMediaFiles() {
 		const div = this.mediaDiv;
 		div.empty();
+		HTMLHelper.CreateListEditor(
+			div, '', false, this, this.skill.mediaFilePaths,
+			() => { return ''; },
+			(
+				div: HTMLDivElement, index: number,
+				refreshList: () => Promise<void>,
+				refreshPage: () => Promise<void>
+			) => {
+				this.DisplayMedia(div, index, refreshList, refreshPage);
+			},
+			async () => {
+				this.DisplayMediaFiles();
+			}
+		);
 	}
 
 	/**
@@ -161,7 +177,30 @@ export class SkillView extends TextFileView {
 		refreshList: () => Promise<void>,
 		refreshPage: () => Promise<void>
 	) {
+		const shiftButtonsDiv = div.createDiv('hbox');
 
+		HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, this.skill.mediaFilePaths, index, false, refreshList);
+		HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, this.skill.mediaFilePaths, index, false, refreshList);
+
+		const pathDiv = div.createDiv('hbox');
+		HTMLHelper.CreateNewTextDiv(pathDiv, this.skill.mediaFilePaths[index]);
+		const openModalButton = pathDiv.createEl('button', { text: 'Edit' } );
+		const mediaDiv = div.createDiv('vbox');
+
+        const changePath = async (file: TFile) => {
+			this.skill.mediaFilePaths[index] = file.path;
+			this.requestSave();
+        }
+
+		const pathModal = new MediaPathModal(this.app, mediaDiv, async (file: TFile) => { await changePath(file); });
+
+		pathModal.fetchMediaFileFromPath(this.skill.mediaFilePaths[index]);
+
+		this.registerDomEvent(openModalButton, 'click', () => {
+			pathModal.open();
+		});
+
+		HTMLHelper.CreateDeleteButton(div, this, this.skill.mediaFilePaths, index, refreshList);
 	}
 
 	/**
@@ -170,7 +209,17 @@ export class SkillView extends TextFileView {
 	 */
 	private DisplayDescription() {
 		const div = this.textDescriptionDiv;
+		div.className = 'vbox';
 		div.empty();
+		const input = div.createEl('textarea', { text: this.skill.description } );
+		HTMLHelper.AutoAdjustHeight(div, input, input.textContent);
+		this.registerDomEvent(input, 'input', () => {
+			HTMLHelper.AutoAdjustHeight(div, input, input.value);
+		});
+		this.registerDomEvent(input, 'change', () => {
+			this.skill.description = input.value;
+			this.requestSave();
+		})
 	}
 	
 

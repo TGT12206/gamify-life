@@ -76,7 +76,7 @@ export default class GamifyLife extends Plugin {
 					item.setTitle('New ' + normalCase)
 						.setIcon(iconName)
 						.onClick(async () => {
-							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed + ' + normalCase + '.' + viewTypeName, JSON.stringify(newObjMaker()));
+							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed ' + normalCase + '.' + viewTypeName, JSON.stringify(newObjMaker()));
 							this.app.workspace.getLeaf('tab').openFile(newFile);
 						});
 				});

@@ -26,10 +26,10 @@ export class HTMLHelper {
         tempEl.style.fontSize = el.style.fontSize;
         tempEl.style.writingMode = el.style.writingMode;
         tempEl.style.textOrientation = el.style.textOrientation;
-        tempEl.style.padding = '1vh';
+        tempEl.style.padding = '0px';
         const temp = tempEl.getBoundingClientRect();
 
-        el.style.height = temp.height + 'px';
+        el.style.height = (temp.height > 25 ? temp.height : 25) + 'px';
 
         tempEl.remove();
     }

@@ -3,7 +3,7 @@ export class Skill {
     parentSkillPath: string | undefined = undefined;
     description: string;
     mediaFilePaths: string[] = [];
-    milestones: SkillLevel[] = [];
+    levels: SkillLevel[] = [];
     subskillPaths: string[] = [];
     weights: number[] = [];
     unitType: SkillUnit = new SkillUnit();
