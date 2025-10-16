@@ -83,4 +83,12 @@ export default class GamifyLife extends Plugin {
             })
         );
 	}
+
+	private handleRenames() {
+		// if a parent skill is deleted, automatically go through all the subskills and remove the link to it
+	}
+
+	private handleDeletes() {
+		// if a parent skill is renamed, automatically go through all the subskills and update the link to it
+	}
 }

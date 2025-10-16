@@ -1,6 +1,7 @@
 export class Skill {
     name: string = '';
     parentSkillPath: string | undefined = undefined;
+    description: string;
     mediaFilePaths: string[] = [];
     milestones: SkillLevel[] = [];
     subskillPaths: string[] = [];
@@ -8,13 +9,13 @@ export class Skill {
     unitType: SkillUnit = new SkillUnit();
 }
 export class SkillLevel {
-    name: string = '';
-    threshold: number = 0;
-    mediaFilePaths: string[] = [];
+    name: string = 'Master';
+    threshold: number = 10000;
+    mediaFilePath: string = '';
 }
 export class SkillUnit {
-    name: string = '';
-    isTimeBased: boolean = true;
+    name: string = 'Hours Spent';
+    isHoursSpent: boolean = true;
 }
 export class GainedSkillUnit {
     skillPath: string;
