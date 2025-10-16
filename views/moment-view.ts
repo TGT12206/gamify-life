@@ -2,8 +2,8 @@ import { Moment } from 'base-classes/moment';
 import { HTMLHelper } from 'html-helper';
 import { setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
 
-export const VIEW_TYPE_SKILL = 'skill';
-export const SKILL_EXTENSION = 'skill';
+export const VIEW_TYPE_MOMENT = 'MOMENT';
+export const MOMENT_EXTENSION = 'MOMENT';
 
 export class MomentView extends TextFileView {
     moment: Moment;
@@ -15,7 +15,7 @@ export class MomentView extends TextFileView {
     }
 
     getViewType() {
-        return VIEW_TYPE_SKILL;
+        return VIEW_TYPE_MOMENT;
     }
 
     override async onLoadFile(file: TFile): Promise<void> {
@@ -60,7 +60,7 @@ export class MomentView extends TextFileView {
     }
 
     private SetUserDefinedCSSProperties() {
-        // this is for showing the colors of this skill via css as defined by the user.
+        // this is for showing the colors of this MOMENT via css as defined by the user.
     }
     //#endregion Display Helper Functions
 }

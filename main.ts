@@ -1,38 +1,36 @@
 import { Skill } from 'base-classes/skill';
 import { SkillView, SKILL_EXTENSION, VIEW_TYPE_SKILL } from 'views/skill-view';
-import { Notice, Plugin, WorkspaceLeaf } from 'obsidian';
+import { Moment } from 'base-classes/moment';
+import { MomentView, MOMENT_EXTENSION, VIEW_TYPE_MOMENT } from 'views/moment-view';
+import { Notice, Plugin, View, WorkspaceLeaf } from 'obsidian';
 
 export default class GamifyLife extends Plugin {
 	async onload() {
-
-		this.registerView(
+		this.addExtension(
+			'Skill',
+			'chart-column-increasing',
+			SKILL_EXTENSION,
 			VIEW_TYPE_SKILL,
-			(leaf) => new SkillView(leaf)
+			() => {
+				return new Skill();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new SkillView(leaf);
+			}
 		);
 
-		this.registerExtensions([SKILL_EXTENSION], VIEW_TYPE_SKILL);
-
-		this.addCommand({
-			id: 'new-lang-dict',
-			name: 'Create Language Dictionary',
-			callback: async () => {
-				const newFile = await this.app.vault.create('Unnamed.' + SKILL_EXTENSION, JSON.stringify(new Skill()));
-				this.app.workspace.getLeaf('tab').openFile(newFile);
+		this.addExtension(
+			'Moment',
+			'calendar-clock',
+			MOMENT_EXTENSION,
+			VIEW_TYPE_MOMENT,
+			() => {
+				return new Moment();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new MomentView(leaf);
 			}
-		});
-
-		this.registerEvent(
-            this.app.workspace.on('file-menu', (menu, file) => {
-				menu.addItem((item) => {
-					item.setTitle('New Language Dictionary')
-						.setIcon('book-type')
-						.onClick(async () => {
-							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed.' + VIEW_TYPE_SKILL, JSON.stringify(new Skill()));
-							this.app.workspace.getLeaf('tab').openFile(newFile);
-						});
-				});
-            })
-        );
+		);
 	}
 
 	onunload() {
@@ -53,5 +51,36 @@ export default class GamifyLife extends Plugin {
 
 		// "Reveal" the leaf in case it is in a collapsed sidebar
 		workspace.revealLeaf(leaf);
+	}
+
+	private addExtension(name: string, iconName: string, extensionName: string, viewTypeName: string, newObjMaker: () => any, newViewMaker: (leaf: WorkspaceLeaf) => View) {
+		this.registerView(viewTypeName, newViewMaker);
+		this.registerExtensions([extensionName], viewTypeName);
+
+		const upperCase = name.toUpperCase();
+		const lowerCase = name.toLowerCase();
+		const normalCase = upperCase.charAt(0) + lowerCase.substring(1);
+		
+		this.addCommand({
+			id: 'new-' + lowerCase,
+			name: 'Create new ' + normalCase,
+			callback: async () => {
+				const newFile = await this.app.vault.create('Unnamed.' + extensionName, JSON.stringify(newObjMaker()));
+				this.app.workspace.getLeaf('tab').openFile(newFile);
+			}
+		});
+
+		this.registerEvent(
+            this.app.workspace.on('file-menu', (menu, file) => {
+				menu.addItem((item) => {
+					item.setTitle('New ' + normalCase)
+						.setIcon(iconName)
+						.onClick(async () => {
+							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed + ' + normalCase + '.' + viewTypeName, JSON.stringify(newObjMaker()));
+							this.app.workspace.getLeaf('tab').openFile(newFile);
+						});
+				});
+            })
+        );
 	}
 }
