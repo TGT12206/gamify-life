@@ -57,7 +57,7 @@ export class SkillView extends TextFileView {
 	private Display(data: string) {
 		this.ParseAndReassignData(data);
 		this.contentEl.empty();
-		this.mainDiv = this.contentEl.createDiv('gl-main');
+		this.mainDiv = this.contentEl.createDiv('gl-main vbox');
 
 		const mainDiv = this.mainDiv;
 
@@ -72,7 +72,7 @@ export class SkillView extends TextFileView {
 		this.levelsDiv = middleDiv.createDiv('hbox');
 		this.unitDiv = middleDiv.createDiv('vbox');
 
-		this.subskillDiv = middleDiv.createDiv('vbox');
+		this.subskillDiv = mainDiv.createDiv('vbox');
 
 		this.DisplayParentSkill();
 		this.DisplayProgress();
@@ -258,6 +258,35 @@ export class SkillView extends TextFileView {
 	private DisplayUnit() {
 		const div = this.unitDiv;
 		div.empty();
+		const nameInput = div.createEl('input', { type: 'text', value: this.skill.unitType.name } );
+		HTMLHelper.CreateNewTextDiv(div, 'Default (Hrs Spent):');
+		const doDefault = div.createEl('input', { type: 'checkbox' } );
+		doDefault.checked = this.skill.unitType.isHoursSpent;
+		if (this.skill.parentSkillPath !== undefined) {
+			const setToSameAsParent = div.createEl('button', { text: 'Reset to parent unit' } );
+			this.registerDomEvent(setToSameAsParent, 'click', async () => {
+				const parentPath = this.skill.parentSkillPath;
+
+				if (parentPath === undefined) {
+					return div.empty();
+				}
+
+				const tFile = this.vault.getFileByPath(parentPath);
+
+				if (tFile === null) {
+					return div.empty();
+				}
+				this.skill.unitType.name = tFile.basename;
+			});
+		}
+
+		this.registerDomEvent(nameInput, 'change', () => {
+			this.skill.unitType.name = nameInput.value;
+		});
+		this.registerDomEvent(doDefault, 'click', () => {
+			doDefault.checked = !doDefault.checked;
+			this.skill.unitType.isHoursSpent = doDefault.checked;
+		});
 	}
 
 	/**
