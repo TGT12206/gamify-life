@@ -1,9 +1,9 @@
 {
-	"id": "tgt-dictionary",
-	"name": "TGT-Dictionary",
-	"version": "1.0.0",
+	"id": "gamify-life",
+	"name": "gamify-life",
+	"version": "0.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Adds TGT-Lang files that are dictionaries.",
+	"description": "",
 	"author": "TGT12206",
 	"authorUrl": "n/a",
 	"fundingUrl": "n/a",
