@@ -1,6 +1,6 @@
 import { Skill } from 'base-classes/skill';
 import { HTMLHelper } from 'html-helper';
-import { setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
+import { Notice, setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
 
 export const VIEW_TYPE_SKILL = 'skill';
 export const SKILL_EXTENSION = 'skill';
@@ -8,7 +8,17 @@ export const SKILL_EXTENSION = 'skill';
 export class SkillView extends TextFileView {
 	skill: Skill;
 	mainDiv: HTMLDivElement;
-	currentFileName: string;
+	parentSkillDiv: HTMLDivElement;
+	progressDiv: HTMLDivElement;
+	mediaDiv: HTMLDivElement;
+	textDescriptionDiv: HTMLDivElement;
+	levelsDiv: HTMLDivElement;
+	unitDiv: HTMLDivElement;
+	subskillDiv: HTMLDivElement;
+
+	get vault() {
+		return this.app.vault;
+	}
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -19,17 +29,16 @@ export class SkillView extends TextFileView {
 	}
 
 	override async onLoadFile(file: TFile): Promise<void> {
-		this.currentFileName = file.basename;
 		super.onLoadFile(file);
 	}
 
 	override async onRename(file: TFile): Promise<void> {
-		this.currentFileName = file.basename;
+		this.skill.name = file.basename;
 		this.requestSave();
 	}
 
 	getDisplayText() {
-		return this.currentFileName;
+		return this.file ? this.file.basename : 'Untitled';
 	}
 
 	override async setViewData(data: string, clear: boolean): Promise<void> {
@@ -41,7 +50,6 @@ export class SkillView extends TextFileView {
 	}
 
 	clear(): void {
-		this.currentFileName = '';
 		return;
 	}
 
@@ -52,26 +60,26 @@ export class SkillView extends TextFileView {
 
 		const mainDiv = this.mainDiv;
 
-		const parentSkillDiv = mainDiv.createDiv('hbox');
-		const progressDiv = mainDiv.createDiv('vbox');
+		this.parentSkillDiv = mainDiv.createDiv('hbox');
+		this.progressDiv = mainDiv.createDiv('vbox');
 		
 		const descriptionDiv = mainDiv.createDiv('vbox');
-		const mediaDiv = descriptionDiv.createDiv('hbox');
-		const textDescriptionDiv = descriptionDiv.createDiv('hbox');
+		this.mediaDiv = descriptionDiv.createDiv('hbox');
+		this.textDescriptionDiv = descriptionDiv.createDiv('hbox');
 
 		const middleDiv = mainDiv.createDiv('hbox');
-		const levelsDiv = middleDiv.createDiv('hbox');
-		const unitDiv = middleDiv.createDiv('vbox');
+		this.levelsDiv = middleDiv.createDiv('hbox');
+		this.unitDiv = middleDiv.createDiv('vbox');
 
-		const subskillDiv = middleDiv.createDiv('vbox');
+		this.subskillDiv = middleDiv.createDiv('vbox');
 
-		this.DisplayParentSkill(parentSkillDiv);
-		this.DisplayProgress(progressDiv);
-		this.DisplayMediaFiles(mediaDiv);
-		this.DisplayDescription(textDescriptionDiv);
-		this.DisplayLevels(levelsDiv);
-		this.DisplayUnit(unitDiv);
-		this.DisplaySubSkills(subskillDiv);
+		this.DisplayParentSkill();
+		this.DisplayProgress();
+		this.DisplayMediaFiles();
+		this.DisplayDescription();
+		this.DisplayLevels();
+		this.DisplayUnit();
+		this.DisplaySubSkills();
 	}
 
 	private ParseAndReassignData(data: string) {
@@ -83,30 +91,60 @@ export class SkillView extends TextFileView {
 	/**
 	 * Creates a div element showing the name of the parent and
 	 * a button that opens the parent file. If there is no parent,
-	 * this function removes the div it is given.
-	 * @param div the div to display inside of.
+	 * this function empties the div it is given.
 	 */
-	private DisplayParentSkill(div: HTMLDivElement) {
+	private async DisplayParentSkill() {
+		const div = this.parentSkillDiv;
+		div.empty();
 
+		const parentPath = this.skill.parentSkillPath;
+
+		if (parentPath === undefined) {
+			return div.empty();
+		}
+
+		const tFile = this.vault.getFileByPath(parentPath);
+
+		if (tFile === null) {
+			return div.empty();
+		}
+		const data = await this.vault.cachedRead(tFile);
+		const plainObj = JSON.parse(data);
+		const parentSkill = new Skill();
+		Object.assign(parentSkill, plainObj);
+
+		HTMLHelper.CreateNewTextDiv(div, 'Parent Skill:');
+		const button = HTMLHelper.CreateNewTextDiv(div, parentSkill.name, 'pointer-hover');
+		this.registerDomEvent(button, 'click', () => {
+		const parentPath = this.skill.parentSkillPath;
+			if (parentPath === undefined) {
+				return new Notice('Parent no longer exists');
+			}
+			const tFile = this.vault.getFileByPath(parentPath);
+			if (tFile === null) {
+				return new Notice(parentPath + ' not found');
+			}
+			this.app.workspace.getLeaf('tab').openFile(tFile);
+		});
 	}
 
 	/**
 	 * Displays the progress made in this skill in the form of a slider
 	 * with a max based on the level with the highest threshold, and
 	 * displays all the media associated with the levels achieved so far.
-	 * @param div the div to display inside of.
 	 */
-	private DisplayProgress(div: HTMLDivElement) {
-		
+	private DisplayProgress() {
+		const div = this.progressDiv;
+		div.empty();
 	}
 
 	/**
 	 * Creates a list editor for all the media files the user adds to
 	 * this skill.
-	 * @param div the div to display inside of.
 	 */
-	private DisplayMediaFiles(div: HTMLDivElement) {
-
+	private DisplayMediaFiles() {
+		const div = this.mediaDiv;
+		div.empty();
 	}
 
 	/**
@@ -129,20 +167,20 @@ export class SkillView extends TextFileView {
 	/**
 	 * Creates a textarea for the user to edit the description
 	 * of this skill.
-	 * @param div the div to display inside of.
 	 */
-	private DisplayDescription(div: HTMLDivElement) {
-
+	private DisplayDescription() {
+		const div = this.textDescriptionDiv;
+		div.empty();
 	}
 	
 
 
 	/**
 	 * Creates a list editor of the levels of this skill.
-	 * @param div the div to display inside of.
 	 */
-	private DisplayLevels(div: HTMLDivElement) {
-
+	private DisplayLevels() {
+		const div = this.levelsDiv;
+		div.empty();
 	}
 
 	/**
@@ -167,20 +205,19 @@ export class SkillView extends TextFileView {
 	 * Creates an editor for the skill unit of this skill,
 	 * allowing the user to edit the name of the unit as well as
 	 * whether or not the unit is just the number of hours spent.
-	 * @param div the div to display inside of.
 	 */
-	private DisplayUnit(div: HTMLDivElement) {
-
+	private DisplayUnit() {
+		const div = this.unitDiv;
+		div.empty();
 	}
-	
-
 
 	/**
 	 * Creates a list editor for the subskills of this skill.
-	 * @param div the div to display inside of.
 	 */
-	private DisplaySubSkills(div: HTMLDivElement) {
+	private DisplaySubSkills() {
 		// includes weights for each one
+		const div = this.subskillDiv;
+		div.empty();
 	}
 
 	/**
