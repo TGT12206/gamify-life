@@ -1,22 +1,22 @@
-import { Language } from 'language';
-import { LanguageView, TGT_LANGUAGE_EXTENSION, VIEW_TYPE_TGT_LANGUAGE } from 'language-view';
+import { Skill } from 'base-classes/skill';
+import { SkillView, SKILL_EXTENSION, VIEW_TYPE_SKILL } from 'views/skill-view';
 import { Notice, Plugin, WorkspaceLeaf } from 'obsidian';
 
-export default class VideoNote extends Plugin {
+export default class GamifyLife extends Plugin {
 	async onload() {
 
 		this.registerView(
-			VIEW_TYPE_TGT_LANGUAGE,
-			(leaf) => new LanguageView(leaf)
+			VIEW_TYPE_SKILL,
+			(leaf) => new SkillView(leaf)
 		);
 
-		this.registerExtensions([TGT_LANGUAGE_EXTENSION], VIEW_TYPE_TGT_LANGUAGE);
+		this.registerExtensions([SKILL_EXTENSION], VIEW_TYPE_SKILL);
 
 		this.addCommand({
 			id: 'new-lang-dict',
 			name: 'Create Language Dictionary',
 			callback: async () => {
-				const newFile = await this.app.vault.create('Unnamed.' + TGT_LANGUAGE_EXTENSION, JSON.stringify(new Language()));
+				const newFile = await this.app.vault.create('Unnamed.' + SKILL_EXTENSION, JSON.stringify(new Skill()));
 				this.app.workspace.getLeaf('tab').openFile(newFile);
 			}
 		});
@@ -27,7 +27,7 @@ export default class VideoNote extends Plugin {
 					item.setTitle('New Language Dictionary')
 						.setIcon('book-type')
 						.onClick(async () => {
-							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed.' + TGT_LANGUAGE_EXTENSION, JSON.stringify(new Language()));
+							const newFile = await this.app.vault.create((file.parent === null ? '' : file.parent.path + '/') + 'Unnamed.' + VIEW_TYPE_SKILL, JSON.stringify(new Skill()));
 							this.app.workspace.getLeaf('tab').openFile(newFile);
 						});
 				});
