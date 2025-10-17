@@ -239,9 +239,6 @@ export class MomentView extends TextFileView {
                 refreshList: () => Promise<void>
             ) => {
                 await this.DisplaySkillUnitGained(div, index, refreshList);
-            },
-            async () => {
-                this.DisplaySkillUnitsGained();
             }
         );
     }
@@ -254,16 +251,14 @@ export class MomentView extends TextFileView {
      * This function will look at the skill at the given path to
      * determine whether or not to default to the duration of this
      * moment in hours, or to default to 1.
-	 * @param div the div to display inside of.
-	 * @param index the index of the media file.
-	 * @param refreshList a function that refreshes the list.
-	 * @param refreshPage a function that refreshes the entire page.
 	 */
 	private async DisplaySkillUnitGained(
 		div: HTMLDivElement,
 		index: number,
 		refreshList: () => Promise<void>
 	) {
+        div.classList.add('gl-fit-content');
+        div.classList.add('gl-outer-container');
         const mainList = this.moment.skillUnitsGained;
         const unitGained = this.moment.skillUnitsGained[index];
         let skill;

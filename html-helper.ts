@@ -68,10 +68,8 @@ export class HTMLHelper {
         objUIMaker: (
             div: HTMLDivElement,
             index: number,
-            refreshList: () => Promise<void>,
-            refreshPage: () => Promise<void>
-        ) => (void | Promise<void>),
-        refreshPage: () => Promise<void>
+            refreshList: () => Promise<void>
+        ) => (void | Promise<void>)
     ) {
         div.empty();
         div.className = (listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses;
@@ -81,20 +79,19 @@ export class HTMLHelper {
             this.CreateListEditor(
                 div, extraDivClasses, listIsVertical,
                 view,
-                mainArray, newObjMaker, objUIMaker,
-                refreshPage
+                mainArray, newObjMaker, objUIMaker
             );
         }
         
         for (let i = 0; i < mainArray.length; i++) {
-            objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), i, refreshList, refreshPage);
+            objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), i, refreshList);
         }
         const addButton = div.createEl('button');
         setIcon(addButton, 'plus');
         view.registerDomEvent(addButton, 'click', async () => {
             const index = mainArray.length;
             mainArray.push( await newObjMaker() );
-            await objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), index, refreshList, refreshPage);
+            await objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), index, refreshList);
         });
     }
     static CreateColorSwapButton(
@@ -217,9 +214,6 @@ export class HTMLHelper {
                 refreshList: () => Promise<void>
             ) => {
                 this.DisplayMedia(div, index, refreshList, view, mediaPaths);
-            },
-            async () => {
-                this.DisplayMediaFiles(div, view, mediaPaths);
             }
         );
     }
@@ -235,23 +229,28 @@ export class HTMLHelper {
         view: ItemView,
         mediaPaths: string[]
     ) {
+        div.classList.add('gl-fit-content');
+        div.classList.add('gl-outer-container');
         const shiftButtonsDiv = div.createDiv('hbox');
 
         HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
         HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
 
-        const pathDiv = div.createDiv('hbox');
-        HTMLHelper.CreateNewTextDiv(pathDiv, mediaPaths[index], 'gl-scroll');
-        const openFileButton = pathDiv.createEl('button', { text: 'Open Link' } );
-        const openModalButton = pathDiv.createEl('button', { text: 'Edit Link' } );
+        const pathTextDiv = HTMLHelper.CreateNewTextDiv(div, mediaPaths[index], 'gl-scroll');
+        pathTextDiv.id = 'gl-crop-path';
+        const pathButtonsDiv = div.createDiv('hbox');
+        const openFileButton = pathButtonsDiv.createEl('button', { text: 'Open Link' } );
+        const openModalButton = pathButtonsDiv.createEl('button', { text: 'Edit Link' } );
         const mediaDiv = div.createDiv('vbox');
         HTMLHelper.CreateDeleteButton(div, view, mediaPaths, index, refreshList);
 
         const changePath = async (file: TFile) => {
             mediaPaths[index] = file.path;
+            pathTextDiv.textContent = file.path;
             if (view instanceof TextFileView) {
                 view.requestSave();
             }
+            pathModal.close();
         }
 
         const pathModal = new MediaPathModal(view.app, mediaDiv, async (file: TFile) => { await changePath(file); });

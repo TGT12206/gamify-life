@@ -76,8 +76,10 @@ export class MediaPathModal extends FuzzySuggestModal<TFile> {
             mediaEl = this.associatedMediaDiv.createEl('img');
         } else if (MediaPathModal.isVideo(extension)) {
             mediaEl = this.associatedMediaDiv.createEl('video');
+            mediaEl.controls = true;
         } else {
             mediaEl = this.associatedMediaDiv.createEl('audio');
+            mediaEl.controls = true;
         }
         mediaEl.className = 'gl-media';
         const arrayBuffer = await this.vault.readBinary(tFile);
