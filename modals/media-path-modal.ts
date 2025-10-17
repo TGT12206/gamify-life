@@ -2,17 +2,42 @@ import {App, FuzzySuggestModal, Notice, TFile} from 'obsidian';
 
 export class MediaPathModal extends FuzzySuggestModal<TFile> {
 
-    static imageFileTypes: string[] = [
-        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'avif', 'heic', 'ico'
-    ];
+    static get validFileTypes() {
+        const output: string[] = [];
+        
+        const imgTypes = this.imageFileTypes;
+        const vidTypes = this.videoFileTypes;
+        const audTypes = this.audioFileTypes;
 
-    static videoFileTypes: string[] = [
-        'mp4', 'mov', 'webm', 'mkv', 'avi', 'm4v', 'flv', 'mpg', 'mpeg'
-    ];
+        for (let i = 0; i < imgTypes.length; i++) {
+            output.push(imgTypes[i]);
+        }
+        for (let i = 0; i < vidTypes.length; i++) {
+            output.push(vidTypes[i]);
+        }
+        for (let i = 0; i < audTypes.length; i++) {
+            output.push(audTypes[i]);
+        }
+        return output;
+    }
 
-    static audioFileTypes: string[] = [
-        'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'aiff', 'wma'
-    ];
+    static get imageFileTypes() {
+        return [
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'avif', 'heic', 'ico'
+        ]
+    };
+
+    static get videoFileTypes() {
+        return [
+            'mp4', 'mov', 'webm', 'mkv', 'avi', 'm4v', 'flv', 'mpg', 'mpeg'
+        ]
+    };
+
+    static get audioFileTypes() {
+        return [
+            'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'aiff', 'wma'
+        ]
+    };
 
     static isImage(extension: string) {
         return MediaPathModal.imageFileTypes.contains(extension);

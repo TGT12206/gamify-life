@@ -42,7 +42,7 @@ export class SkillView extends TextFileView {
 	}
 
 	getDisplayText() {
-		return this.file ? this.file.basename : 'Untitled';
+		return this.file ? this.file.basename : 'Unnamed Skill';
 	}
 
 	override async setViewData(data: string, clear: boolean): Promise<void> {
@@ -57,7 +57,7 @@ export class SkillView extends TextFileView {
 		return;
 	}
 
-	private Display(data: string) {
+	Display(data: string) {
 		this.ParseAndReassignData(data);
 		this.contentEl.empty();
 		this.mainDiv = this.contentEl.createDiv('gl-main gl-outer-container vbox');
@@ -113,6 +113,7 @@ export class SkillView extends TextFileView {
 		const tFile = this.vault.getFileByPath(parentPath);
 
 		if (tFile === null) {
+			this.skill.parentSkillPath = undefined;
 			return div.empty();
 		}
 		const data = await this.vault.cachedRead(tFile);
@@ -123,7 +124,7 @@ export class SkillView extends TextFileView {
 		HTMLHelper.CreateNewTextDiv(div, 'Parent Skill:', 'gl-fit-content');
 		const button = div.createEl('button', { text: parentSkill.name } );
 		this.registerDomEvent(button, 'click', () => {
-		const parentPath = this.skill.parentSkillPath;
+			const parentPath = this.skill.parentSkillPath;
 			if (parentPath === undefined) {
 				return new Notice('Parent no longer exists');
 			}
@@ -362,6 +363,9 @@ export class SkillView extends TextFileView {
 
 		const list = this.skill.subskills;
 		let subskill;
+		if (list[index].path === '') {
+			list[index].path = 'Unnamed Skill.skill';
+		}
 		const tFile = this.vault.getFileByPath(list[index].path);
         if (tFile !== null) {
             const data = await this.vault.cachedRead(tFile);
@@ -373,7 +377,7 @@ export class SkillView extends TextFileView {
         HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, list, index, false, refreshList);
         HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, list, index, false, refreshList);
 
-		const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, subskill ? subskill.name : 'New Subskill');
+		const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, subskill ? subskill.name : 'Unnamed Skill');
 
         const skillButtonsDiv = div.createDiv('hbox');
         const openSkill = skillButtonsDiv.createEl('button', { text: 'Open Subskill' } );
@@ -386,6 +390,9 @@ export class SkillView extends TextFileView {
         HTMLHelper.CreateDeleteButton(div, this, list, index, refreshList);
 
         const updateSubskill = async (file: TFile) => {
+			if (file.path === this.file?.path) {
+				return;
+			}
             const data = await this.vault.cachedRead(file);
             const plainObj = JSON.parse(data);
             subskill = new Skill();
@@ -404,29 +411,18 @@ export class SkillView extends TextFileView {
         this.registerDomEvent(openSkill, 'click', async () => {
             const tFile = this.vault.getFileByPath(list[index].path);
             if (tFile !== null) {
+				new Notice('opening existing ' + list[index].path);
                 this.app.workspace.getLeaf('tab').openFile(tFile);
             } else {
+				new Notice('making new ' + list[index].path);
 				const newSubskill = new Skill();
 				newSubskill.parentSkillPath = this.file?.path;
-				const newFile = await this.app.vault.create((this.file === null ? '' : (this.file.parent !== null ? this.file.parent.path + '/' : '')) + 'New Subskill.skill', JSON.stringify(newSubskill));
+				const newFile = await this.app.vault.create('Unnamed Skill.skill', JSON.stringify(newSubskill));
                 this.app.workspace.getLeaf('tab').openFile(newFile);
 			}
         });
 		this.registerDomEvent(weightInput, 'change', () => {
 			list[index].weight = parseInt(weightInput.value);
 		});
-	}
-	
-	static HandleParentSkillRename() {
-		
-	}
-	static HandleParentSkillDelete() {
-		
-	}
-	static HandleSubskillRename() {
-		
-	}
-	static HandleSubskillDelete() {
-		
 	}
 }

@@ -1,8 +1,9 @@
-import { Skill } from 'base-classes/skill';
+import { Skill, SkillHandler } from 'base-classes/skill';
 import { SkillView, SKILL_EXTENSION, VIEW_TYPE_SKILL } from 'views/skill-view';
-import { Moment } from 'base-classes/moment';
+import { Moment, MomentHandler } from 'base-classes/moment';
 import { MomentView, MOMENT_EXTENSION, VIEW_TYPE_MOMENT } from 'views/moment-view';
-import { Notice, Plugin, View, WorkspaceLeaf } from 'obsidian';
+import { Notice, Plugin, TAbstractFile, TFile, TFolder, View, WorkspaceLeaf } from 'obsidian';
+import { MediaPathModal } from 'modals/media-path-modal';
 
 export default class GamifyLife extends Plugin {
 	async onload() {
@@ -31,6 +32,39 @@ export default class GamifyLife extends Plugin {
 				return new MomentView(leaf);
 			}
 		);
+
+		this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
+			if (file instanceof TFolder) {
+				return;
+			}
+			const tFile = <TFile> file;
+			const ext = tFile.extension;
+			if (ext === MOMENT_EXTENSION) {
+
+			} else if (ext === SKILL_EXTENSION) {
+				await SkillHandler.HandleSkillRename(this.app, oldPath, file.path);
+				await MomentHandler.HandleSkillRename(this.app, oldPath, file.path);
+			} else if (MediaPathModal.validFileTypes.contains(ext)) {
+				await SkillHandler.HandleMediaRename(this.app, oldPath, file.path);
+				await MomentHandler.HandleMediaRename(this.app, oldPath, file.path);
+			}
+		});
+		this.app.vault.on('delete', async (file: TAbstractFile) => {
+			if (file instanceof TFolder) {
+				return;
+			}
+			const tFile = <TFile> file;
+			const ext = tFile.extension;
+			if (ext === MOMENT_EXTENSION) {
+
+			} else if (ext === SKILL_EXTENSION) {
+				await SkillHandler.HandleSkillDelete(this.app, file.path);
+				await MomentHandler.HandleSkillDelete(this.app, file.path);
+			} else if (MediaPathModal.validFileTypes.contains(ext)) {
+				await SkillHandler.HandleMediaDelete(this.app, file.path);
+				await MomentHandler.HandleMediaDelete(this.app, file.path);
+			}
+		});
 	}
 
 	onunload() {
@@ -82,13 +116,5 @@ export default class GamifyLife extends Plugin {
 				});
             })
         );
-	}
-
-	private handleRenames() {
-		// if a parent skill is deleted, automatically go through all the subskills and remove the link to it
-	}
-
-	private handleDeletes() {
-		// if a parent skill is renamed, automatically go through all the subskills and update the link to it
 	}
 }

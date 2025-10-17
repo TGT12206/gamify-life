@@ -53,7 +53,7 @@ export class MomentView extends TextFileView {
         return;
     }
 
-    private Display(data: string) {
+    Display(data: string) {
         this.ParseAndReassignData(data);
         this.contentEl.empty();
         this.mainDiv = this.contentEl.createDiv('gl-main gl-outer-container vbox');
