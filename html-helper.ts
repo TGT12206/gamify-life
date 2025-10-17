@@ -1,4 +1,5 @@
-import { ItemView, setIcon } from "obsidian";
+import { MediaPathModal } from "modals/media-path-modal";
+import { ItemView, Notice, setIcon, TextFileView, TFile, View } from "obsidian";
 
 export class HTMLHelper {
     static AutoAdjustWidth(cleanDiv: HTMLDivElement, el: HTMLElement, text: string) {
@@ -52,7 +53,7 @@ export class HTMLHelper {
         ) => (void | Promise<void>)
     ) {
         div.empty();
-        div.className = (listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses;
+        div.className = (listIsVertical ? 'vbox' : 'hbox') + ' gl-scroll ' + extraDivClasses;
         for (let i = 0; i < mainArray.length; i++) {
             objUIMaker(div.createDiv(!listIsVertical ? 'vbox' : 'hbox'), i);
         }
@@ -74,7 +75,7 @@ export class HTMLHelper {
     ) {
         div.empty();
         div.className = (listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses;
-        const listDiv = div.createDiv((listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses);
+        const listDiv = div.createDiv((listIsVertical ? 'vbox' : 'hbox') + ' gl-scroll ' + extraDivClasses);
 
         const refreshList = async () => {
             this.CreateListEditor(
@@ -190,5 +191,84 @@ export class HTMLHelper {
             div.remove();
             afterExit();
 		});
+    }
+
+    static DateToDateTimeLocalString(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+
+        return year + '-' + month + '-' + day + 'T' + hour + ':' + minute;
+    }
+
+    /**
+     * Creates a list editor for all the media files the user adds to
+     * the list of media files.
+     */
+    static DisplayMediaFiles(div: HTMLDivElement, view: ItemView, mediaPaths: string[]) {
+        div.empty();
+        HTMLHelper.CreateListEditor(
+            div.createDiv(), 'gl-outer-container', false, view, mediaPaths,
+            () => { return ''; },
+            (
+                div: HTMLDivElement, index: number,
+                refreshList: () => Promise<void>
+            ) => {
+                this.DisplayMedia(div, index, refreshList, view, mediaPaths);
+            },
+            async () => {
+                this.DisplayMediaFiles(div, view, mediaPaths);
+            }
+        );
+    }
+
+    /**
+     * Creates an editor for a displayed media file, allowing the user
+     * to view, change, and delete the path and order of media files.
+     */
+    private static DisplayMedia(
+        div: HTMLDivElement,
+        index: number,
+        refreshList: () => Promise<void>,
+        view: ItemView,
+        mediaPaths: string[]
+    ) {
+        const shiftButtonsDiv = div.createDiv('hbox');
+
+        HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
+        HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
+
+        const pathDiv = div.createDiv('hbox');
+        HTMLHelper.CreateNewTextDiv(pathDiv, mediaPaths[index], 'gl-scroll');
+        const openFileButton = pathDiv.createEl('button', { text: 'Open Link' } );
+        const openModalButton = pathDiv.createEl('button', { text: 'Edit Link' } );
+        const mediaDiv = div.createDiv('vbox');
+        HTMLHelper.CreateDeleteButton(div, view, mediaPaths, index, refreshList);
+
+        const changePath = async (file: TFile) => {
+            mediaPaths[index] = file.path;
+            if (view instanceof TextFileView) {
+                view.requestSave();
+            }
+        }
+
+        const pathModal = new MediaPathModal(view.app, mediaDiv, async (file: TFile) => { await changePath(file); });
+
+        pathModal.fetchMediaFileFromPath(mediaPaths[index]);
+
+        view.registerDomEvent(openFileButton, 'click', () => {
+            const tFile = view.app.vault.getFileByPath(mediaPaths[index]);
+            if (tFile === null) {
+                return new Notice(mediaPaths[index] + ' not found');
+            }
+            view.app.workspace.getLeaf('tab').openFile(tFile);
+        });
+
+        view.registerDomEvent(openModalButton, 'click', () => {
+            pathModal.open();
+        });
+
     }
 }

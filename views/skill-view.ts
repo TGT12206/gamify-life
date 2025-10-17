@@ -12,7 +12,7 @@ export class SkillView extends TextFileView {
 	parentSkillDiv: HTMLDivElement;
 	progressDiv: HTMLDivElement;
 	mediaDiv: HTMLDivElement;
-	textDescriptionDiv: HTMLDivElement;
+	descriptionDiv: HTMLDivElement;
 	levelsDiv: HTMLDivElement;
 	unitDiv: HTMLDivElement;
 	subskillDiv: HTMLDivElement;
@@ -57,26 +57,25 @@ export class SkillView extends TextFileView {
 	private Display(data: string) {
 		this.ParseAndReassignData(data);
 		this.contentEl.empty();
-		this.mainDiv = this.contentEl.createDiv('gl-main vbox');
+		this.mainDiv = this.contentEl.createDiv('gl-main gl-outer-container vbox');
 
 		const mainDiv = this.mainDiv;
 
-		this.parentSkillDiv = mainDiv.createDiv('hbox');
-		this.progressDiv = mainDiv.createDiv('vbox');
+		this.parentSkillDiv = mainDiv.createDiv('hbox gl-bordered');
+		this.progressDiv = mainDiv.createDiv('vbox gl-bordered');
 		
-		const descriptionDiv = mainDiv.createDiv('vbox');
-		this.mediaDiv = descriptionDiv.createDiv('hbox');
-		this.textDescriptionDiv = descriptionDiv.createDiv('hbox');
+		this.mediaDiv = mainDiv.createDiv('hbox gl-bordered');
+		this.descriptionDiv = mainDiv.createDiv('vbox gl-bordered');
 
-		const middleDiv = mainDiv.createDiv('hbox');
-		this.levelsDiv = middleDiv.createDiv('hbox');
-		this.unitDiv = middleDiv.createDiv('vbox');
+		const middleDiv = mainDiv.createDiv('gl-outer-container hbox');
+		this.levelsDiv = middleDiv.createDiv('hbox gl-bordered');
+		this.unitDiv = middleDiv.createDiv('vbox gl-bordered');
 
-		this.subskillDiv = mainDiv.createDiv('vbox');
+		this.subskillDiv = mainDiv.createDiv('vbox gl-bordered');
 
 		this.DisplayParentSkill();
 		this.DisplayProgress();
-		this.DisplayMediaFiles();
+		HTMLHelper.DisplayMediaFiles(this.mediaDiv, this, this.skill.mediaPaths);
 		this.DisplayDescription();
 		this.DisplayLevels();
 		this.DisplayUnit();
@@ -87,6 +86,9 @@ export class SkillView extends TextFileView {
 		const plainObj = JSON.parse(data);
 		this.skill = new Skill();
 		Object.assign(this.skill, plainObj);
+		if (this.skill.name === undefined) {
+			this.skill.name = this.getDisplayText();
+		}
 	}
 
 	/**
@@ -141,85 +143,17 @@ export class SkillView extends TextFileView {
 	}
 
 	/**
-	 * Creates a list editor for all the media files the user adds to
-	 * this skill.
-	 */
-	private DisplayMediaFiles() {
-		const div = this.mediaDiv;
-		div.empty();
-		HTMLHelper.CreateListEditor(
-			div, '', false, this, this.skill.mediaFilePaths,
-			() => { return ''; },
-			(
-				div: HTMLDivElement, index: number,
-				refreshList: () => Promise<void>,
-				refreshPage: () => Promise<void>
-			) => {
-				this.DisplayMedia(div, index, refreshList, refreshPage);
-			},
-			async () => {
-				this.DisplayMediaFiles();
-			}
-		);
-	}
-
-	/**
-	 * Creates an editor for a displayed media file, allowing the user
-	 * to view, change, and delete the path and order of media files.
-	 * @param div the div to display inside of.
-	 * @param index the index of the media file.
-	 * @param refreshList a function that refreshes the list.
-	 * @param refreshPage a function that refreshes the entire page.
-	 */
-	private DisplayMedia(
-		div: HTMLDivElement,
-		index: number,
-		refreshList: () => Promise<void>,
-		refreshPage: () => Promise<void>
-	) {
-		const shiftButtonsDiv = div.createDiv('hbox');
-
-		HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, this.skill.mediaFilePaths, index, false, refreshList);
-		HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, this.skill.mediaFilePaths, index, false, refreshList);
-
-		const pathDiv = div.createDiv('hbox');
-		HTMLHelper.CreateNewTextDiv(pathDiv, this.skill.mediaFilePaths[index]);
-		const openModalButton = pathDiv.createEl('button', { text: 'Edit' } );
-		const mediaDiv = div.createDiv('vbox');
-
-        const changePath = async (file: TFile) => {
-			this.skill.mediaFilePaths[index] = file.path;
-			this.requestSave();
-        }
-
-		const pathModal = new MediaPathModal(this.app, mediaDiv, async (file: TFile) => { await changePath(file); });
-
-		pathModal.fetchMediaFileFromPath(this.skill.mediaFilePaths[index]);
-
-		this.registerDomEvent(openModalButton, 'click', () => {
-			pathModal.open();
-		});
-
-		HTMLHelper.CreateDeleteButton(div, this, this.skill.mediaFilePaths, index, refreshList);
-	}
-
-	/**
 	 * Creates a textarea for the user to edit the description
 	 * of this skill.
 	 */
 	private DisplayDescription() {
-		const div = this.textDescriptionDiv;
-		div.className = 'vbox';
+		const div = this.descriptionDiv;
 		div.empty();
 		const input = div.createEl('textarea', { text: this.skill.description } );
-		HTMLHelper.AutoAdjustHeight(div, input, input.textContent);
-		this.registerDomEvent(input, 'input', () => {
-			HTMLHelper.AutoAdjustHeight(div, input, input.value);
-		});
 		this.registerDomEvent(input, 'change', () => {
 			this.skill.description = input.value;
 			this.requestSave();
-		})
+		});
 	}
 	
 

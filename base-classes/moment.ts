@@ -1,6 +1,7 @@
 import { GainedSkillUnit } from "./skill";
 
 export class Moment {
+    name: string = '';
     startTime: Date = new Date();
     endTime: Date = new Date();
     mediaPaths: string[] = [];

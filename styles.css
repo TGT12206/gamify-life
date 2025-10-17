@@ -30,12 +30,32 @@ button:hover {
 	height: 100%;
 }
 
-.gl-main :is(div, input, textarea) {
+.gl-outer-container {
+	gap: 1vh;
+}
+
+.gl-main :is(div, input[type=text], textarea) {
 	width: 100%;
+}
+
+.gl-main textarea {
+	height: 20vh;
+}
+
+.gl-bordered {
+	padding: 0.5vh;
+	border-style: solid;
+	border-radius: 1vh;
+	border-width: 2px;
+	border-color: var(--color-accent);
 }
 
 .gl-media {
 	object-fit: contain;
-	width: 10vw;
-	height: 10vw;
+	width: 3vw;
+	height: 3vw;
+}
+
+.gl-scroll {
+	overflow: scroll;
 }
