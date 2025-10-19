@@ -2,9 +2,7 @@ import { Skill, SkillHandler, SkillLevel } from 'base-classes/skill';
 import { HTMLHelper } from 'html-helper';
 import { MediaPathModal } from 'modals/media-path-modal';
 import { SkillPathModal } from 'modals/skill-path-modal';
-import { Notice, setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
-import { MOMENT_EXTENSION } from './moment-view';
-import { Moment } from 'base-classes/moment';
+import { Notice, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
 
 export const VIEW_TYPE_SKILL = 'skill';
 export const SKILL_EXTENSION = 'skill';
@@ -30,19 +28,6 @@ export class SkillView extends TextFileView {
 
 	getViewType() {
 		return VIEW_TYPE_SKILL;
-	}
-
-	override async onLoadFile(file: TFile): Promise<void> {
-		super.onLoadFile(file);
-	}
-
-	override async onRename(file: TFile): Promise<void> {
-		this.skill.name = file.basename;
-		this.requestSave();
-	}
-
-	getDisplayText() {
-		return this.file ? this.file.basename : 'Unnamed Skill';
 	}
 
 	override async setViewData(data: string, clear: boolean): Promise<void> {
@@ -90,9 +75,6 @@ export class SkillView extends TextFileView {
 		const plainObj = JSON.parse(data);
 		this.skill = new Skill();
 		Object.assign(this.skill, plainObj);
-		if (this.skill.name === undefined) {
-			this.skill.name = this.getDisplayText();
-		}
 	}
 
 	/**
@@ -122,7 +104,7 @@ export class SkillView extends TextFileView {
 		Object.assign(parentSkill, plainObj);
 
 		HTMLHelper.CreateNewTextDiv(div, 'Parent Skill:', 'gl-fit-content');
-		const button = div.createEl('button', { text: parentSkill.name } );
+		const button = div.createEl('button', { text: tFile.basename } );
 		this.registerDomEvent(button, 'click', () => {
 			const parentPath = this.skill.parentSkillPath;
 			if (parentPath === undefined) {
@@ -145,19 +127,31 @@ export class SkillView extends TextFileView {
 		const div = this.progressDiv;
 		div.empty();
 		
-		let maxThreshold = 0;
+		let targetThreshold = 0;
+		let targetLevel;
 		for (let i = 0; i < this.skill.levels.length; i++) {
 			const currentThreshold = this.skill.levels[i].threshold;
-			if (currentThreshold > maxThreshold) {
-				maxThreshold = currentThreshold;
+			if (currentThreshold > targetThreshold) {
+				targetThreshold = currentThreshold;
+				targetLevel = this.skill.levels[i];
 			}
 		}
 		if (this.file === null) {
 			return;
 		}
-		const currentUnits = await SkillHandler.CountUnits(this.app, this.file.path);
+		const currentUnits = (await SkillHandler.CountUnits(this.app, this.file.path)).units;
 
 		HTMLHelper.CreateNewTextDiv(div, 'Progress: ' + currentUnits + ' ' + this.skill.unitType.name);
+		if (targetThreshold > currentUnits) {
+			for (let i = 0; i < this.skill.levels.length; i++) {
+				const currentThreshold = this.skill.levels[i].threshold;
+				if (currentUnits < currentThreshold && currentThreshold < targetThreshold) {
+					targetThreshold = currentThreshold;
+					targetLevel = this.skill.levels[i];
+				}
+			}
+			HTMLHelper.CreateNewTextDiv(div, (targetThreshold - currentUnits) + ' ' + this.skill.unitType.name + ' left before ' + targetLevel?.name);
+		}
 
 		const slider = div.createDiv('hbox');
 		
@@ -167,9 +161,11 @@ export class SkillView extends TextFileView {
 		sliderFill.id = 'gl-skill-slider-fill';
 		sliderEmpty.id = 'gl-skill-slider-empty';
 
-		const percentProgress = (currentUnits * 100 / maxThreshold);
+		let percentProgress = (currentUnits * 100 / targetThreshold);
+		percentProgress = percentProgress > 100 ? 100 : percentProgress;
+		const percentEmpty = 100 - percentProgress;
 		sliderFill.style.width = percentProgress + '%';
-		sliderEmpty.style.width = (100 - percentProgress) + '%';
+		sliderEmpty.style.width = percentEmpty + '%';
 	}
 
 	/**
@@ -239,7 +235,10 @@ export class SkillView extends TextFileView {
         const openModalButton = pathButtonsDiv.createEl('button', { text: 'Edit Link' } );
 		const mediaDiv = div.createDiv('vbox');
 
-        HTMLHelper.CreateDeleteButton(div, this, list, index, refreshProgess);
+        HTMLHelper.CreateDeleteButton(div, this, list, index, async () => {
+			refreshList();
+			refreshProgess();
+		});
 
 		const changePath = async (file: TFile) => {
             list[index].mediaPath = file.path;
@@ -362,11 +361,13 @@ export class SkillView extends TextFileView {
         const shiftButtonsDiv = div.createDiv('hbox');
 
 		const list = this.skill.subskills;
-		let subskill;
+		let subskillPath = list[index].path;
+        let subskill;
 		if (list[index].path === '') {
 			list[index].path = 'Unnamed Skill.skill';
+			subskillPath = 'Unnamed Skill.skill';
 		}
-		const tFile = this.vault.getFileByPath(list[index].path);
+		const tFile = this.vault.getFileByPath(subskillPath);
         if (tFile !== null) {
             const data = await this.vault.cachedRead(tFile);
             const plainObj = JSON.parse(data);
@@ -376,20 +377,37 @@ export class SkillView extends TextFileView {
 
         HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, list, index, false, refreshList);
         HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, list, index, false, refreshList);
+		
+        const buttonsDiv = div.createDiv('hbox');
+        const open = buttonsDiv.createEl('button', { text: 'Open Link' } );
+        const edit = buttonsDiv.createEl('button', { text: 'Edit Link' } );
 
-		const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, subskill ? subskill.name : 'Unnamed Skill');
-
-        const skillButtonsDiv = div.createDiv('hbox');
-        const openSkill = skillButtonsDiv.createEl('button', { text: 'Open Subskill' } );
-        const changeSkill = skillButtonsDiv.createEl('button', { text: 'Change Subskill' } );
+		const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, tFile ? tFile.basename : 'Unnamed Skill');
 		
 		const weightDiv = div.createDiv('hbox gl-outer-container');
 		HTMLHelper.CreateNewTextDiv(weightDiv, 'Weight: ');
         const weightInput = weightDiv.createEl('input', { type: 'number', value: list[index].weight + '' } );
 
-        HTMLHelper.CreateDeleteButton(div, this, list, index, refreshList);
+		HTMLHelper.CreateDeleteButton(div, this, list, index, async () => {
+			const tFile = this.vault.getFileByPath(subskillPath);
+			if (tFile === null) {
+				return;
+			}
+			await this.vault.delete(tFile);
+			refreshList();
+		});
 
         const updateSubskill = async (file: TFile) => {
+			let oldPath = list[index].path;
+			const tFile = this.vault.getFileByPath(oldPath);
+			if (tFile !== null) {
+				const data = await this.vault.cachedRead(tFile);
+				const plainObj = JSON.parse(data);
+				const oldSubskill = new Skill();
+				Object.assign(oldSubskill, plainObj);
+				oldSubskill.parentSkillPath = undefined;
+				await this.vault.adapter.write(tFile.path, JSON.stringify(oldSubskill));
+			}
 			if (file.path === this.file?.path) {
 				return;
 			}
@@ -398,23 +416,24 @@ export class SkillView extends TextFileView {
             subskill = new Skill();
             Object.assign(subskill, plainObj);
             pathModal.close();
+			subskill.parentSkillPath = this.file?.path;
+			subskillPath = file.path;
+			await this.vault.adapter.write(file.path, JSON.stringify(subskill));
 			list[index].path = file.path;
-            skillNameDiv.textContent = subskill.name;
+            skillNameDiv.textContent = file.basename;
             this.requestSave();
         }
 
 		const pathModal = new SkillPathModal(this.app, updateSubskill);
 
-		this.registerDomEvent(changeSkill, 'click', () => {
+		this.registerDomEvent(edit, 'click', () => {
             pathModal.open();
         });
-        this.registerDomEvent(openSkill, 'click', async () => {
+        this.registerDomEvent(open, 'click', async () => {
             const tFile = this.vault.getFileByPath(list[index].path);
             if (tFile !== null) {
-				new Notice('opening existing ' + list[index].path);
-                this.app.workspace.getLeaf('tab').openFile(tFile);
+				this.app.workspace.getLeaf('tab').openFile(tFile);
             } else {
-				new Notice('making new ' + list[index].path);
 				const newSubskill = new Skill();
 				newSubskill.parentSkillPath = this.file?.path;
 				const newFile = await this.app.vault.create('Unnamed Skill.skill', JSON.stringify(newSubskill));

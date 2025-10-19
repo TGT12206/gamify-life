@@ -4,6 +4,11 @@ import { Moment, MomentHandler } from 'base-classes/moment';
 import { MomentView, MOMENT_EXTENSION, VIEW_TYPE_MOMENT } from 'views/moment-view';
 import { Notice, Plugin, TAbstractFile, TFile, TFolder, View, WorkspaceLeaf } from 'obsidian';
 import { MediaPathModal } from 'modals/media-path-modal';
+import { OBSERVABLE_EXTENSION, ObservableView, VIEW_TYPE_OBSERVABLE } from 'views/observable-view';
+import { SELF_EXTENSION, SelfView, VIEW_TYPE_SELF } from 'views/self-view';
+import { Observable, Self } from 'base-classes/observable';
+import { OBSERVATION_EXTENSION, ObservationView, VIEW_TYPE_OBSERVATION } from 'views/observation-view';
+import { TASK_EXTENSION, TaskView, VIEW_TYPE_TASK } from 'views/task-view';
 
 export default class GamifyLife extends Plugin {
 	async onload() {
@@ -33,7 +38,59 @@ export default class GamifyLife extends Plugin {
 			}
 		);
 
-		this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
+		this.addExtension(
+			'Observation',
+			'notebook-pen',
+			OBSERVATION_EXTENSION,
+			VIEW_TYPE_OBSERVATION,
+			() => {
+				return new Self();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new ObservationView(leaf);
+			}
+		);
+
+		this.addExtension(
+			'Observable',
+			'microscope',
+			OBSERVABLE_EXTENSION,
+			VIEW_TYPE_OBSERVABLE,
+			() => {
+				return new Observable();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new ObservableView(leaf);
+			}
+		);
+
+		this.addExtension(
+			'Self',
+			'user-round',
+			SELF_EXTENSION,
+			VIEW_TYPE_SELF,
+			() => {
+				return new Self();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new SelfView(leaf);
+			}
+		);
+
+		this.addExtension(
+			'Task',
+			'clipboard-list',
+			TASK_EXTENSION,
+			VIEW_TYPE_TASK,
+			() => {
+				return new Self();
+			},
+			(leaf: WorkspaceLeaf) => {
+				return new TaskView(leaf);
+			}
+		);
+
+		this.registerEvent(this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
 			if (file instanceof TFolder) {
 				return;
 			}
@@ -48,8 +105,8 @@ export default class GamifyLife extends Plugin {
 				await SkillHandler.HandleMediaRename(this.app, oldPath, file.path);
 				await MomentHandler.HandleMediaRename(this.app, oldPath, file.path);
 			}
-		});
-		this.app.vault.on('delete', async (file: TAbstractFile) => {
+		}));
+		this.registerEvent(this.app.vault.on('delete', async (file: TAbstractFile) => {
 			if (file instanceof TFolder) {
 				return;
 			}
@@ -64,11 +121,11 @@ export default class GamifyLife extends Plugin {
 				await SkillHandler.HandleMediaDelete(this.app, file.path);
 				await MomentHandler.HandleMediaDelete(this.app, file.path);
 			}
-		});
+		}));
 	}
 
 	onunload() {
-
+		
 	}
 
 	async activateView(view_type: string) {

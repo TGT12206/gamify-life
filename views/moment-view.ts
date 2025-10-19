@@ -1,9 +1,10 @@
 import { Moment } from 'base-classes/moment';
+import { Observable } from 'base-classes/observable';
 import { GainedSkillUnit, Skill } from 'base-classes/skill';
 import { HTMLHelper } from 'html-helper';
-import { MediaPathModal } from 'modals/media-path-modal';
+import { ObservablePathModal } from 'modals/observable-path-modal';
 import { SkillPathModal } from 'modals/skill-path-modal';
-import { Notice, setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
+import { setIcon, TextFileView, TFile, WorkspaceLeaf } from 'obsidian';
 
 export const VIEW_TYPE_MOMENT = 'moment';
 export const MOMENT_EXTENSION = 'moment';
@@ -12,6 +13,7 @@ export class MomentView extends TextFileView {
     moment: Moment;
     mainDiv: HTMLDivElement;
     dateDiv: HTMLDivElement;
+    observableDiv: HTMLDivElement;
     mediaDiv: HTMLDivElement;
     descriptionDiv: HTMLDivElement;
     skillDiv: HTMLDivElement;
@@ -26,19 +28,6 @@ export class MomentView extends TextFileView {
 
     getViewType() {
         return VIEW_TYPE_MOMENT;
-    }
-
-    override async onLoadFile(file: TFile): Promise<void> {
-        super.onLoadFile(file);
-    }
-
-    override async onRename(file: TFile): Promise<void> {
-        this.moment.name = file.basename;
-        this.requestSave();
-    }
-
-    getDisplayText() {
-        return this.file ? this.file.basename : 'Untitled';
     }
 
     override async setViewData(data: string, clear: boolean): Promise<void> {
@@ -61,13 +50,16 @@ export class MomentView extends TextFileView {
 		const mainDiv = this.mainDiv;
 
 		this.dateDiv = mainDiv.createDiv('vbox gl-bordered gl-outer-container');
+        
+		this.observableDiv = mainDiv.createDiv('vbox gl-bordered gl-outer-container');
 
-		this.mediaDiv = mainDiv.createDiv('hbox gl-bordered');
-		this.descriptionDiv = mainDiv.createDiv('hbox gl-bordered');
+		this.mediaDiv = mainDiv.createDiv('vbox gl-bordered gl-outer-container');
+		this.descriptionDiv = mainDiv.createDiv('vbox gl-bordered gl-outer-container');
 
-		this.skillDiv = mainDiv.createDiv('hbox gl-bordered');
+		this.skillDiv = mainDiv.createDiv('vbox gl-bordered gl-outer-container');
 
 		this.DisplayDateInfo();
+        this.DisplayObservables();
 		HTMLHelper.DisplayMediaFiles(this.mediaDiv, this, this.moment.mediaPaths);
 		this.DisplayDescription();
 		this.DisplaySkillUnitsGained();
@@ -93,6 +85,8 @@ export class MomentView extends TextFileView {
         const div = this.dateDiv;
         div.empty();
         
+        HTMLHelper.CreateNewTextDiv(div, 'Date / Time Info');
+
         const timeDiv = div.createDiv('hbox gl-outer-container');
         
         const startDiv = timeDiv.createDiv('vbox gl-outer-container');
@@ -209,12 +203,92 @@ export class MomentView extends TextFileView {
     }
 
     /**
+	 * Creates a list editor for all the observables involved in
+	 * this moment.
+	 */
+    private DisplayObservables() {
+        const div = this.observableDiv;
+        div.empty();
+        HTMLHelper.CreateNewTextDiv(div, 'Observables Involved');
+        HTMLHelper.CreateListEditor(
+            div.createDiv(), 'gl-outer-container', false,
+            this, this.moment.observablePaths,
+            () => { return new Observable(); },
+            async (
+                div: HTMLDivElement,
+                index: number,
+                refreshList: () => Promise<void>
+            ) => {
+                await this.DisplayObservable(div, index, refreshList);
+            }
+        );
+    }
+    
+    /**
+	 * Creates an editor for the path to the observable.
+	 */
+    private async DisplayObservable(
+        div: HTMLDivElement,
+        index: number,
+        refreshList: () => Promise<void>
+    ) {
+        div.classList.add('gl-fit-content');
+        div.classList.add('gl-outer-container');
+
+        const shiftButtonsDiv = div.createDiv('hbox');
+
+        const list = this.moment.observablePaths;
+        let observablePath = list[index];
+        if (list[index] === '') {
+            list[index] = 'Unnamed Observable.observable';
+            observablePath = 'Unnamed Observable.observable';
+        }
+        const tFile = this.vault.getFileByPath(observablePath);
+
+        HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, list, index, false, refreshList);
+        HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, list, index, false, refreshList);
+        
+        const buttonsDiv = div.createDiv('hbox');
+        const open = buttonsDiv.createEl('button', { text: 'Open Link' } );
+        const edit = buttonsDiv.createEl('button', { text: 'Edit Link' } );
+
+        const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, tFile ? tFile.basename : 'Unnamed Observable');
+
+        HTMLHelper.CreateDeleteButton(div, this, list, index, refreshList);
+
+        const updateObservable = async (file: TFile) => {
+            pathModal.close();
+            observablePath = file.path;
+            list[index] = file.path;
+            skillNameDiv.textContent = file.basename;
+            this.requestSave();
+        }
+
+        const pathModal = new ObservablePathModal(this.app, updateObservable);
+
+        this.registerDomEvent(edit, 'click', () => {
+            pathModal.open();
+        });
+        this.registerDomEvent(open, 'click', async () => {
+            const tFile = this.vault.getFileByPath(list[index]);
+            if (tFile !== null) {
+                this.app.workspace.getLeaf('tab').openFile(tFile);
+            } else {
+                const newObservable = new Observable();
+                const newFile = await this.app.vault.create('Unnamed Observable.observable', JSON.stringify(newObservable));
+                this.app.workspace.getLeaf('tab').openFile(newFile);
+            }
+        });
+    }
+
+    /**
 	 * Creates a textarea for the user to edit the description
 	 * of this moment.
 	 */
     private DisplayDescription() {
 		const div = this.descriptionDiv;
 		div.empty();
+        HTMLHelper.CreateNewTextDiv(div, 'Description');
 		const input = div.createEl('textarea', { text: this.moment.description } );
 		this.registerDomEvent(input, 'change', () => {
 			this.moment.description = input.value;
@@ -229,6 +303,7 @@ export class MomentView extends TextFileView {
     private DisplaySkillUnitsGained() {
         const div = this.skillDiv;
         div.empty();
+        HTMLHelper.CreateNewTextDiv(div, 'Skill Units Gained');
         HTMLHelper.CreateListEditor(
             div.createDiv(), 'gl-outer-container', false,
             this, this.moment.skillUnitsGained,
@@ -278,11 +353,11 @@ export class MomentView extends TextFileView {
         HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, this, mainList, index, false, refreshList);
         HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, this, mainList, index, false, refreshList);
 
-        const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, skill ? skill.name : 'Unassigned skill');
+        const buttonsDiv = div.createDiv('hbox');
+        const open = buttonsDiv.createEl('button', { text: 'Open Link' } );
+        const edit = buttonsDiv.createEl('button', { text: 'Edit Link' } );
 
-        const skillButtonsDiv = div.createDiv('hbox');
-        const openSkill = skillButtonsDiv.createEl('button', { text: 'Open Skill' } );
-        const changeSkill = skillButtonsDiv.createEl('button', { text: 'Change Skill' } );
+        const skillNameDiv = HTMLHelper.CreateNewTextDiv(div, tFile ? tFile.basename : 'Unassigned skill');
 
         const numUnitsDiv = div.createDiv('hbox');
         if (unitType === undefined || unitGained.unitsGained === undefined) {
@@ -290,7 +365,7 @@ export class MomentView extends TextFileView {
             const endTime = this.moment.endTime.getTime();
             unitGained.unitsGained = (endTime - startTime) / 3600000;
         }
-        numUnitsDiv.createEl('input', { type: 'number', value: unitGained.unitsGained + '' } );
+        const unitGainedInput = numUnitsDiv.createEl('input', { type: 'number', value: unitGained.unitsGained + '' } );
         HTMLHelper.CreateNewTextDiv(numUnitsDiv, unitType ? unitType.name : 'Hours Spent');
 
         HTMLHelper.CreateDeleteButton(div, this, mainList, index, refreshList);
@@ -303,20 +378,23 @@ export class MomentView extends TextFileView {
             unitType = skill.unitType;
             pathModal.close();
             unitGained.skillPath = file.path;
-            skillNameDiv.textContent = skill.name;
+            skillNameDiv.textContent = file.basename;
             this.requestSave();
         }
 
         const pathModal = new SkillPathModal(this.app, updateSkill);
 
-        this.registerDomEvent(changeSkill, 'click', () => {
+        this.registerDomEvent(edit, 'click', () => {
             pathModal.open();
         });
-        this.registerDomEvent(openSkill, 'click', () => {
+        this.registerDomEvent(open, 'click', () => {
             const tFile = this.vault.getFileByPath(unitGained.skillPath);
             if (tFile !== null) {
                 this.app.workspace.getLeaf('tab').openFile(tFile);
             }
+        });
+        this.registerDomEvent(unitGainedInput, 'change', () => {
+            unitGained.unitsGained = parseFloat(unitGainedInput.value);
         });
 	}
 }

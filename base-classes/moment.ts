@@ -3,15 +3,13 @@ import { GainedSkillUnit } from "./skill";
 import { MOMENT_EXTENSION, MomentView, VIEW_TYPE_MOMENT } from "views/moment-view";
 
 export class Moment {
-    name: string = '';
     startTime: Date = new Date();
     endTime: Date = new Date();
     mediaPaths: string[] = [];
     description: string = '';
     skillUnitsGained: GainedSkillUnit[] = [];
     taskPaths: string[] = []; // unused for now
-    peoplePaths: string[] = []; // unused for now
-    observationPaths: string[] = []; // unused for now
+    observablePaths: string[] = [];
 }
 
 export class MomentHandler {
@@ -28,8 +26,9 @@ export class MomentHandler {
 
         return output;
     }
+
     /**
-     * Responsible for looping through all skill files in the vault and finding
+     * Responsible for looping through all moment files in the vault and finding
      * links to the renamed skill and changing the link
      */
     static async HandleSkillRename(app: App, oldPath: string, newPath: string) {
@@ -64,7 +63,7 @@ export class MomentHandler {
     }
 
     /**
-     * Responsible for looping through all skill files in the vault and finding
+     * Responsible for looping through all moment files in the vault and finding
      * links to the deleted skill and removing the link
      */
     static async HandleSkillDelete(app: App, oldPath: string) {
@@ -99,7 +98,7 @@ export class MomentHandler {
     }
     
     /**
-     * Responsible for looping through all skill files in the vault and finding
+     * Responsible for looping through all moment files in the vault and finding
      * links to the renamed media and changing the link
      */
     static async HandleMediaRename(app: App, oldPath: string, newPath: string) {
@@ -130,7 +129,7 @@ export class MomentHandler {
     }
 
     /**
-     * Responsible for looping through all skill files in the vault and finding
+     * Responsible for looping through all moment files in the vault and finding
      * links to the deleted media and removing the link
      */
     static async HandleMediaDelete(app: App, oldPath: string) {

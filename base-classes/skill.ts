@@ -1,10 +1,9 @@
-import { App, normalizePath, Notice, TFile, Vault } from "obsidian";
+import { App, TFile, Vault } from "obsidian";
 import { MOMENT_EXTENSION } from "views/moment-view";
 import { Moment } from "./moment";
 import { SKILL_EXTENSION, SkillView, VIEW_TYPE_SKILL } from "views/skill-view";
 
 export class Skill {
-    name: string = 'Unnamed Skill';
     parentSkillPath: string | undefined = undefined;
     description: string;
     mediaPaths: string[] = [];
@@ -26,12 +25,12 @@ export class GainedSkillUnit {
     unitsGained: number;
 }
 export class SkillHandler {
-    static async CountUnits(app: App, skillPath: string) {
+    static async CountUnits(app: App, skillPath: string): Promise<{ units: number, unit: SkillUnit }> {
         const vault = app.vault;
 
         const tFile = vault.getFileByPath(skillPath);
         if (tFile === null) {
-            return 0;
+            return { units: 0, unit: new SkillUnit() };
         }
         const data = await vault.cachedRead(tFile);
         const skill = <Skill> JSON.parse(data);
@@ -63,7 +62,7 @@ export class SkillHandler {
                 }
 			}
 		}
-        return units;
+        return { units: units, unit: skill.unitType };
     }
 
     private static async GetAllSubskills(skill: { skill: Skill, path: string, weight: number }, vault: Vault, subskillList: { skill: Skill, path: string, weight: number }[]) {
@@ -105,9 +104,7 @@ export class SkillHandler {
             const currentSkillFile = allSkillFiles[i];
             const data = await app.vault.cachedRead(currentSkillFile);
             const plainObj = JSON.parse(data);
-            if (currentSkillFile.path === newPath) {
-                plainObj.name = currentSkillFile.basename;
-            } else if (plainObj.parentSkillPath === oldPath) {
+            if (plainObj.parentSkillPath === oldPath) {
                 plainObj.parentSkillPath = newPath;
             } else {
                 for (let j = 0; j < plainObj.subskills.length; j++) {

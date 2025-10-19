@@ -132,6 +132,7 @@ export class HTMLHelper {
         refreshList: () => Promise<void>
     ) {
 		const upButton = div.createEl('button');
+        upButton.className = 'gl-fit-content';
 		setIcon(upButton, listIsVertical ? 'arrow-big-up' : 'arrow-big-left');
 		view.registerDomEvent(upButton, 'click', () => {
 			if (index > 0) {
@@ -150,6 +151,7 @@ export class HTMLHelper {
         refreshList: () => Promise<void>
     ) {
 		const downButton = div.createEl('button');
+        downButton.className = 'gl-fit-content';
 		setIcon(downButton, listIsVertical ? 'arrow-big-down' : 'arrow-big-right');
 		view.registerDomEvent(downButton, 'click', () => {
 			if (index < mainArray.length) {
@@ -167,7 +169,7 @@ export class HTMLHelper {
         refreshList: () => Promise<void>
     ) {
 		const deleteButton = div.createEl('button');
-        deleteButton.className = 'remove-button';
+        deleteButton.className = 'gl-fit-content remove-button';
         setIcon(deleteButton, 'trash-2');
 		view.registerDomEvent(deleteButton, 'click', () => {
 			mainArray.splice(index, 1);
@@ -206,6 +208,7 @@ export class HTMLHelper {
      */
     static DisplayMediaFiles(div: HTMLDivElement, view: ItemView, mediaPaths: string[]) {
         div.empty();
+        HTMLHelper.CreateNewTextDiv(div, 'Media Files');
         HTMLHelper.CreateListEditor(
             div.createDiv(), 'gl-outer-container', false, view, mediaPaths,
             () => { return ''; },
@@ -235,12 +238,13 @@ export class HTMLHelper {
 
         HTMLHelper.CreateShiftElementUpButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
         HTMLHelper.CreateShiftElementDownButton(shiftButtonsDiv, view, mediaPaths, index, false, refreshList);
+        
+        const buttonsDiv = div.createDiv('hbox');
+        const open = buttonsDiv.createEl('button', { text: 'Open Link' } );
+        const edit = buttonsDiv.createEl('button', { text: 'Edit Link' } );
 
         const pathTextDiv = HTMLHelper.CreateNewTextDiv(div, mediaPaths[index], 'gl-scroll');
         pathTextDiv.id = 'gl-crop-path';
-        const pathButtonsDiv = div.createDiv('hbox');
-        const openFileButton = pathButtonsDiv.createEl('button', { text: 'Open Link' } );
-        const openModalButton = pathButtonsDiv.createEl('button', { text: 'Edit Link' } );
         const mediaDiv = div.createDiv('vbox');
         HTMLHelper.CreateDeleteButton(div, view, mediaPaths, index, refreshList);
 
@@ -257,7 +261,7 @@ export class HTMLHelper {
 
         pathModal.fetchMediaFileFromPath(mediaPaths[index]);
 
-        view.registerDomEvent(openFileButton, 'click', () => {
+        view.registerDomEvent(open, 'click', () => {
             const tFile = view.app.vault.getFileByPath(mediaPaths[index]);
             if (tFile === null) {
                 return new Notice(mediaPaths[index] + ' not found');
@@ -265,7 +269,7 @@ export class HTMLHelper {
             view.app.workspace.getLeaf('tab').openFile(tFile);
         });
 
-        view.registerDomEvent(openModalButton, 'click', () => {
+        view.registerDomEvent(edit, 'click', () => {
             pathModal.open();
         });
 

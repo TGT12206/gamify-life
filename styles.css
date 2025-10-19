@@ -38,7 +38,7 @@ button:hover {
 	width: 100%;
 }
 
-.gl-main :is(div, input[type=text], textarea).gl-fit-content {
+.gl-main :is(div, input[type=text], textarea, button).gl-fit-content {
 	width: fit-content;
 }
 

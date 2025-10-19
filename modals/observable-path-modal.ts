@@ -1,7 +1,8 @@
-import {App, FuzzySuggestModal, Notice, TFile} from 'obsidian';
-import { SKILL_EXTENSION } from 'views/skill-view';
+import {App, FuzzySuggestModal, TFile} from 'obsidian';
+import { OBSERVABLE_EXTENSION } from 'views/observable-view';
+import { SELF_EXTENSION } from 'views/self-view';
 
-export class SkillPathModal extends FuzzySuggestModal<TFile> {
+export class ObservablePathModal extends FuzzySuggestModal<TFile> {
 
     onSubmit: (file: TFile) => Promise<void>;
 
@@ -17,7 +18,7 @@ export class SkillPathModal extends FuzzySuggestModal<TFile> {
         const allFiles = this.vault.getFiles();
         for (let i = allFiles.length - 1; i >= 0; i--) {
             const currFile = allFiles[i];
-            if (currFile.extension !== SKILL_EXTENSION) {
+            if (!(currFile.extension === OBSERVABLE_EXTENSION || currFile.extension === SELF_EXTENSION)) {
                 allFiles.splice(i, 1);
             }
         }
