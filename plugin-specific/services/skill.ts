@@ -15,19 +15,21 @@ export class SkillService {
         if (!skillKV) return 0;
         const skillKey = skillKV.key;
 
-        for (const moment of life.moments) {
+        for (let i = 0; i < life.moments.length; i++) {
+            const moment = life.moments[i];
             const gainedUnit = moment.skillUnitsGained.find(su => su.skillKey === skillKey);
             if (gainedUnit) {
                 totalUnits += gainedUnit.unitsGained;
             }
         }
 
-        for (const subRef of skill.subskills) {
-            const subskillKV = life.concepts.find(kv => kv.key === subRef.key);
+        for (let i = 0; i < skill.subskills.length; i++) {
+            const subskillRef = skill.subskills[i];
+            const subskillKV = life.concepts.find(kv => kv.key === subskillRef.key);
             
             if (subskillKV) {
                 const subskillTotal = this.CalculateNumberOfUnits(life, <Skill> subskillKV.value);
-                totalUnits += (subskillTotal * subRef.weight);
+                totalUnits += (subskillTotal * subskillRef.weight);
             }
         }
 
