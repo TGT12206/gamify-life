@@ -13,11 +13,10 @@ export class RelatedObservationCardUIMaker extends ObjUIMaker<KeyValue<Concept>>
         index: number
     ): Promise<void> {
         const obs = <Observation> mainArray[index].value;
-        itemDiv.classList.add('gl-bordered', 'gl-fit-content', 'vbox');
-        const nameButton = itemDiv.createEl('button', { text: obs.name } );
-        HTMLHelper.CreateNewTextDiv(itemDiv, obs.description);
+        const button = itemDiv.createEl('button', { text: obs.description } );
+        button.className = 'gl-bordered gl-fill';
 
-        view.registerDomEvent(nameButton, 'click', () => {
+        view.registerDomEvent(button, 'click', () => {
             view.OpenCorrectConceptEditor(obs);
         });
     }
