@@ -308,6 +308,28 @@ export class SearchConceptKVGridEditor extends KeyValueGridEditor<Concept> {
     }
     public override async RefreshList(view: ItemView): Promise<void> {
         SearchForResults(this.context);
-        super.RefreshList(view);
+        const scrollTop = this.listDiv.scrollTop;
+        this.listDiv.empty();
+        if (this.isVertical) {
+            this.listDiv.style.gridTemplateColumns = 'repeat(' + this.itemsPerLine + ', 1fr)';
+        } else {
+            this.listDiv.style.gridTemplateRows = 'repeat(' + this.itemsPerLine + ', 1fr)';
+        }
+        
+        for (let i = 0; i < this.context.searchResults.length; i++) {
+            const itemContainer = this.listDiv.createDiv('gl-outer-div gl-scroll ' + (this.objUIMaker.isVertical ? 'vbox' : 'hbox'));
+            await this.objUIMaker.MakeUI(
+                view,
+                itemContainer,
+                this.mainArray,
+                this.context.searchResults[i],
+                this.onSave,
+                async () => {
+                    await this.onSave();
+                    await this.RefreshList(view);
+                }
+            );
+        }
+        this.listDiv.scrollTop = scrollTop;
     }
 }
