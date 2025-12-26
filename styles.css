@@ -1,23 +1,113 @@
 :root {
 	--remove-button-color: rgb(116, 26, 26);
 }
+
 .vbox {
 	display: flex;
 	flex-direction: column;
 	justify-content: start;
 }
+
 .hbox {
 	display: flex;
 	flex-direction: row;
 	justify-content: start;
 }
+
+.grid {
+	display: grid;
+}
+
+.gl-pos-anchor {
+	position: relative;
+}
+
 .pointer-hover:hover {
 	cursor: pointer;
 }
+
+button:hover {
+	cursor: pointer;
+}
+
 :is(button.remove-button, .remove-button) {
 	background-color: var(--remove-button-color);
 }
+
 :is(button.exit-button, .exit-button) {
 	background-color: var(--remove-button-color);
 	align-self: flex-end;
+}
+
+.gl-main {
+	width: 100%;
+	height: 100%;
+}
+
+.gl-outer-div {
+	gap: 1vh;
+}
+
+.gl-tab-bar {
+	width: 7.5vh;
+}
+
+#gl-unselected-tab {
+	background-color: 'transparent';
+}
+
+#gl-selected-tab {
+	background-color: var(--color-accent);
+}
+
+.gl-fill {
+	flex-grow: 1;
+}
+
+.gl-module {
+	height: 100%;
+}
+
+.gl-main :is(div, input[type=text], textarea, button).gl-fit-content {
+	width: fit-content;
+	height: fit-content;
+}
+
+.gl-main textarea {
+	height: 20vh;
+}
+
+.gl-bordered {
+	padding: 0.5vh;
+	border-style: solid;
+	border-radius: 1vh;
+	border-width: 2px;
+	border-color: var(--color-accent);
+}
+
+.gl-media {
+	object-fit: contain;
+	width: 2.5vw;
+	height: 2.5vw;
+}
+
+.gl-scroll {
+	overflow: scroll;
+}
+
+#gl-grid-add-button {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	bottom: 0%;
+	right: 0%;
+}
+
+#gl-progress-bar-fill {
+	background-color: var(--color-accent);
+	height: 100%;
+}
+
+#gl-progress-bar-empty {
+	background-color: transparent;
+	height: 100%;
 }

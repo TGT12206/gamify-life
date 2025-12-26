@@ -26,10 +26,10 @@ export class HTMLHelper {
         tempEl.style.fontSize = el.style.fontSize;
         tempEl.style.writingMode = el.style.writingMode;
         tempEl.style.textOrientation = el.style.textOrientation;
-        tempEl.style.padding = '1vh';
+        tempEl.style.padding = '0px';
         const temp = tempEl.getBoundingClientRect();
 
-        el.style.height = temp.height + 'px';
+        el.style.height = (temp.height > 25 ? temp.height : 25) + 'px';
 
         tempEl.remove();
     }
@@ -52,49 +52,10 @@ export class HTMLHelper {
         ) => (void | Promise<void>)
     ) {
         div.empty();
-        div.className = (listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses;
+        div.className = (listIsVertical ? 'vbox' : 'hbox') + ' gl-scroll ' + extraDivClasses;
         for (let i = 0; i < mainArray.length; i++) {
             objUIMaker(div.createDiv(!listIsVertical ? 'vbox' : 'hbox'), i);
         }
-    }
-    static async CreateListEditor(
-        div: HTMLDivElement,
-        extraDivClasses: string,
-        listIsVertical: boolean,
-        view: ItemView,
-        mainArray: any[],
-        newObjMaker: () => (any | Promise<any>),
-        objUIMaker: (
-            div: HTMLDivElement,
-            index: number,
-            refreshList: () => Promise<void>,
-            refreshPage: () => Promise<void>
-        ) => (void | Promise<void>),
-        refreshPage: () => Promise<void>
-    ) {
-        div.empty();
-        div.className = (listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses;
-        const listDiv = div.createDiv((listIsVertical ? 'vbox' : 'hbox') + ' ' + extraDivClasses);
-
-        const refreshList = async () => {
-            this.CreateListEditor(
-                div, extraDivClasses, listIsVertical,
-                view,
-                mainArray, newObjMaker, objUIMaker,
-                refreshPage
-            );
-        }
-        
-        for (let i = 0; i < mainArray.length; i++) {
-            objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), i, refreshList, refreshPage);
-        }
-        const addButton = div.createEl('button');
-        setIcon(addButton, 'plus');
-        view.registerDomEvent(addButton, 'click', async () => {
-            const index = mainArray.length;
-            mainArray.push( await newObjMaker() );
-            await objUIMaker(listDiv.createDiv(!listIsVertical ? 'vbox' : 'hbox'), index, refreshList, refreshPage);
-        });
     }
     static CreateColorSwapButton(
         parentDiv: HTMLDivElement,
@@ -125,57 +86,6 @@ export class HTMLHelper {
             afterSwap();
 		});
     }
-    static CreateShiftElementUpButton(
-        div: HTMLDivElement,
-        view: ItemView,
-        mainArray: any[],
-        index: number,
-        listIsVertical: boolean,
-        refreshList: () => Promise<void>
-    ) {
-		const upButton = div.createEl('button');
-		setIcon(upButton, listIsVertical ? 'arrow-big-up' : 'arrow-big-left');
-		view.registerDomEvent(upButton, 'click', () => {
-			if (index > 0) {
-				const temp = mainArray.splice(index, 1);
-				mainArray.splice(index - 1, 0, temp[0]);
-				refreshList();
-			}
-		});
-    }
-    static CreateShiftElementDownButton(
-        div: HTMLDivElement,
-        view: ItemView,
-        mainArray: any[],
-        index: number,
-        listIsVertical: boolean,
-        refreshList: () => Promise<void>
-    ) {
-		const downButton = div.createEl('button');
-		setIcon(downButton, listIsVertical ? 'arrow-big-down' : 'arrow-big-right');
-		view.registerDomEvent(downButton, 'click', () => {
-			if (index < mainArray.length) {
-				const temp = mainArray.splice(index, 1);
-				mainArray.splice(index + 1, 0, temp[0]);
-				refreshList();
-			}
-		});
-    }
-    static CreateDeleteButton(
-        div: HTMLDivElement,
-        view: ItemView,
-        mainArray: any[],
-        index: number,
-        refreshList: () => Promise<void>
-    ) {
-		const deleteButton = div.createEl('button');
-        deleteButton.className = 'remove-button';
-        setIcon(deleteButton, 'trash-2');
-		view.registerDomEvent(deleteButton, 'click', () => {
-			mainArray.splice(index, 1);
-			refreshList();
-		});
-    }
     static CreateExitButton(
         div: HTMLDivElement,
         view: ItemView,
@@ -190,5 +100,14 @@ export class HTMLHelper {
             div.remove();
             afterExit();
 		});
+    }
+    static DateToDateTimeLocalString(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+
+        return year + '-' + month + '-' + day + 'T' + hour + ':' + minute;
     }
 }
