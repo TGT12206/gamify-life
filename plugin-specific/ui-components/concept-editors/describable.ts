@@ -46,7 +46,7 @@ export class DescribableEditorUIMaker {
         HTMLHelper.CreateNewTextDiv(div, 'Description');
 
         const input = div.createEl('textarea', {
-            value: describable.description
+            text: describable.description
         });
         input.className = 'gl-fill';
 
