@@ -1,16 +1,10 @@
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { ConceptEditorUIMaker } from "./concept";
-import { ListEditor } from "ui-patterns/list-editor";
 import { GamifyLifeView } from "../gamify-life-view";
-import { GainedSkillUnit, Skill, SkillUnit } from "plugin-specific/models/skill";
 import { Moment } from "plugin-specific/models/moment";
 import { setIcon } from "obsidian";
-import { KeyService } from "plugin-specific/services/key";
 import { ConceptKeyListEditor } from "../list-editors/concept-key";
-import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { ConceptService } from "plugin-specific/services/concept";
+import { GainedSkillUnitListEditor } from "../list-editors/gained-skill-unit";
 
 export class MomentEditorUIMaker extends ConceptEditorUIMaker {
     override MakeUI(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
@@ -163,81 +157,3 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
         listEditor.Render(view);
     }
 }
-
-//#region Gained Skill Units
-export class GainedSkillUnitUIMaker extends ObjUIMaker<GainedSkillUnit> {
-    get moment(): Moment {
-        return <Moment> this.globalData;
-    }
-    set moment(newMoment: Moment) {
-        this.globalData = newMoment;
-    }
-
-    override async MakeUI(
-        view: GamifyLifeView,
-        itemDiv: HTMLDivElement,
-        mainArray: GainedSkillUnit[],
-        index: number,
-        onSave: () => Promise<void>,
-        onRefresh: () => Promise<void>
-    ): Promise<void> {
-        const life = view.life;
-        const moment = this.moment;
-        const unitGained = mainArray[index];
-        const getUnitType = (unitGained: GainedSkillUnit) => {
-            try {
-                const skillIndex = KeyService.FindKey(life.concepts, unitGained.skillKey);
-                const skill = <Skill> life.concepts[skillIndex].value;
-                const unitTypeIndex = KeyService.FindKey(life.concepts, skill.unitKey);
-                const unitType = <SkillUnit> life.concepts[unitTypeIndex].value;
-                return unitType;
-            } catch {
-                return undefined
-            }
-        }
-        const unitType = getUnitType(unitGained);
-
-        if (getUnitType(unitGained) === undefined) {
-            const startTime = moment.startTime.getTime();
-            const endTime = moment.endTime.getTime();
-            unitGained.unitsGained = (endTime - startTime) / 3600000;
-        }
-
-        itemDiv.classList.add('gl-fit-content');
-        itemDiv.classList.add('gl-outer-div');
-        const shiftButtonsDiv = itemDiv.createDiv(this.isVertical ? 'hbox' : 'vbox');
-
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
-
-        const numUnitsDiv = itemDiv.createDiv('hbox');
-        HTMLHelper.CreateNewTextDiv(itemDiv, 'Skill:');
-        const skillKeyInput = itemDiv.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(life, unitGained.skillKey) } );
-
-        const unitGainedInput = numUnitsDiv.createEl('input', { type: 'number', value: unitGained.unitsGained + '' } );
-        HTMLHelper.CreateNewTextDiv(numUnitsDiv, unitType ? unitType.name : 'Hours Spent');
-
-        this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
-
-        const updateSkillKey = async (skillKV: KeyValue<Skill>) => {
-            mainArray[index].skillKey = skillKV.key;
-            await onSave();
-        };
-        new ConceptKeySuggest(skillKeyInput, view.life, undefined, view.app, updateSkillKey, ['Skill']);
-
-        view.registerDomEvent(unitGainedInput, 'change', async () => {
-            unitGained.unitsGained = parseFloat(unitGainedInput.value);
-            await onSave();
-        });
-    }
-}
-
-export class GainedSkillUnitListEditor extends ListEditor<GainedSkillUnit> {
-    constructor(moment: Moment, parentDiv: HTMLDivElement, gainedSkillUnits: GainedSkillUnit[], onSave: () => Promise<void>) {
-        const uiMaker = new GainedSkillUnitUIMaker();
-        super(moment, parentDiv, gainedSkillUnits, () => { return new GainedSkillUnit() }, uiMaker, onSave);
-        this.isVertical = false;
-        uiMaker.isVertical = true;
-    }
-}
-//#endregion Gained Skill Units

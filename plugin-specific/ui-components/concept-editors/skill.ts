@@ -10,6 +10,8 @@ import { ConceptService } from "plugin-specific/services/concept";
 import { KeyValue } from "plugin-specific/models/key-value";
 import { SubskillKeySuggest } from "../suggest/subskill-key-suggest";
 import { SkillService } from "plugin-specific/services/skill";
+import { RankListEditor } from "../list-editors/rank";
+import { SubskillListEditor } from "../list-editors/subskill";
 
 export class SkillEditorUIMaker extends ConceptEditorUIMaker {
     override MakeUI(view: GamifyLifeView, div: HTMLDivElement, skill: Skill) {
@@ -89,94 +91,3 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
         listEditor.Render(view);
     }
 }
-
-//#region Rank
-export class RankUIMaker extends ObjUIMaker<string> {
-    override async MakeUI(
-        view: GamifyLifeView,
-        itemDiv: HTMLDivElement,
-        mainArray: string[],
-        index: number,
-        onSave: () => Promise<void>,
-        onRefresh: () => Promise<void>
-    ): Promise<void> {
-        itemDiv.classList.add('gl-fit-content');
-        itemDiv.classList.add('gl-outer-div');
-        const shiftButtonsDiv = itemDiv.createDiv(this.isVertical ? 'hbox' : 'vbox');
-
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
-        
-        const rankInput = itemDiv.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(view.life, mainArray[index]) } );
-
-        this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
-
-        const updateRank = async (conceptKV: KeyValue<Rank>) => {
-            mainArray[index] = conceptKV.key;
-            await onSave();
-        };
-        new ConceptKeySuggest(rankInput, view.life, undefined, view.app, updateRank, ['Skill Rank']);
-    }
-}
-
-export class RankListEditor extends ListEditor<string> {
-    constructor(parentDiv: HTMLDivElement, ranks: string[], onSave: () => Promise<void>) {
-        const uiMaker = new RankUIMaker();
-        super(undefined, parentDiv, ranks, () => { return '' }, uiMaker, onSave);
-        this.isVertical = false;
-        uiMaker.isVertical = true;
-    }
-}
-//#endregion Rank
-
-//#region Subskill
-export class SubskillUIMaker extends ObjUIMaker<{ key: string, weight: number }> {
-    get root(): Skill {
-        return <Skill> this.globalData;
-    }
-    set root(newRoot: Skill) {
-        this.globalData = newRoot;
-    }
-
-    override async MakeUI(
-        view: GamifyLifeView,
-        itemDiv: HTMLDivElement,
-        mainArray: { key: string, weight: number }[],
-        index: number,
-        onSave: () => Promise<void>,
-        onRefresh: () => Promise<void>
-    ): Promise<void> {
-        itemDiv.classList.add('gl-fit-content');
-        itemDiv.classList.add('gl-outer-div');
-        const shiftButtonsDiv = itemDiv.createDiv(this.isVertical ? 'hbox' : 'vbox');
-
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
-        
-        const keyInput = itemDiv.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(view.life, mainArray[index].key) } );
-        const weightInput = itemDiv.createEl('input', { type: 'number', value: mainArray[index].weight + '' } );
-        
-        this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
-
-        const updateKey = async (conceptKV: KeyValue<Concept>) => {
-            mainArray[index].key = conceptKV.key;
-            await onSave();
-        };
-        new SubskillKeySuggest(keyInput, view.life, this.root, view.app, updateKey);
-
-        view.registerDomEvent(weightInput, 'change', async () => {
-            mainArray[index].weight = parseFloat(weightInput.value);
-            await onSave();
-        });
-    }
-}
-
-export class SubskillListEditor extends ListEditor<{ key: string, weight: number }> {
-    constructor(root: Skill, parentDiv: HTMLDivElement, subskills: { key: string, weight: number }[], onSave: () => Promise<void>) {
-        const uiMaker = new SubskillUIMaker();
-        super(root, parentDiv, subskills, () => { return { key: '', weight: 0 } }, uiMaker, onSave);
-        this.isVertical = false;
-        uiMaker.isVertical = true;
-    }
-}
-//#endregion Subskill
