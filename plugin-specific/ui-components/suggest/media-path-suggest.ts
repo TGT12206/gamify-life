@@ -24,7 +24,7 @@ export class MediaPathSuggest extends AbstractInputSuggest<TFile> {
                     MediaRenderer.isVideo(currFile.extension) ||
                     MediaRenderer.isAudio(currFile.extension))
                     &&
-                    currFile.path.contains(inputStr)
+                    currFile.path.toLowerCase().contains(inputStr.toLowerCase())
                 )
             ) {
                 allFiles.splice(i, 1);

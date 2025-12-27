@@ -22,13 +22,13 @@ export class MediaRenderer {
     }
 
     static isImage(extension: string) {
-        return this.imageFileTypes.contains(extension);
+        return this.imageFileTypes.contains(extension.toLowerCase());
     }
     static isVideo(extension: string) {
-        return this.videoFileTypes.contains(extension);
+        return this.videoFileTypes.contains(extension.toLowerCase());
     }
     static isAudio(extension: string) {
-        return this.audioFileTypes.contains(extension);
+        return this.audioFileTypes.contains(extension.toLowerCase());
     }
 
     static get imageFileTypes() {

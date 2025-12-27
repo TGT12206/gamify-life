@@ -26,7 +26,7 @@ export class MediaKeySuggest extends AbstractInputSuggest<KeyValue<string>> {
             const currFilePath = currFileKV.key;
             const currFileAlias = currFileKV.value;
             const currFileString = currFileAlias + '(' + currFilePath + ')';
-            if (currFileString.contains(inputStr)) {
+            if (currFileString.toLowerCase().contains(inputStr.toLowerCase())) {
                 pluginMediaFiles.push(currFileKV);
             }
         }

@@ -37,7 +37,7 @@ export class ConceptKeySuggest extends AbstractInputSuggest<KeyValue<Concept>> {
             const description = currConceptKV.value.description;
 
             const currConceptString = currName + '(' + currKey + ') ' + description;
-            if (currConceptString.contains(inputStr)) {
+            if (currConceptString.toLowerCase().contains(inputStr.toLowerCase())) {
                 pluginMediaFiles.push(currConceptKV);
             }
         }
