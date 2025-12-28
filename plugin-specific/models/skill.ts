@@ -1,17 +1,20 @@
 import { Concept } from "./concept";
 
 export class Skill extends Concept {
-    rankKeys: string[] = [];
-    subskills: { key: string, weight: number }[] = [];
-    unitKey: string = '';
+    override categoryKeys: string[] = ['Skill'];
+    rankNames: string[] = [];
+    subskills: { name: string, weight: number }[] = [];
+    unitName: string = '';
 }
 export class Rank extends Concept {
+    override categoryKeys: string[] = ['Skill Rank'];
     threshold: number = 10000;
 }
 export class SkillUnit extends Concept {
+    override categoryKeys: string[] = ['Skill Unit'];
     isHoursSpent: boolean = true;
 }
 export class GainedSkillUnit {
-    skillKey: string = '';
+    skillName: string = '';
     unitsGained: number = 0;
 }

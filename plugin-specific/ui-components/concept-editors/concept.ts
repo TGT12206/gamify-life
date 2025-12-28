@@ -5,6 +5,8 @@ import { Concept } from "plugin-specific/models/concept";
 import { RelatedObservationGridEditor } from "../list-editors/related-observation";
 import { CategoryListEditor } from "../list-editors/category";
 import { AliasListEditor } from "../list-editors/alias";
+import { ConceptService } from "plugin-specific/services/concept";
+import { Notice } from "obsidian";
 
 export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
     MakeUI(
@@ -30,6 +32,11 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         div.empty();
         div.addClass('vbox'); 
 
+        if (concept.name === 'Self') {
+            HTMLHelper.CreateNewTextDiv(div, 'Name: Self');
+            return;
+        }
+
         HTMLHelper.CreateNewTextDiv(div, 'Name');
 
         const nameInput = div.createEl('input', {
@@ -39,11 +46,16 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         nameInput.className = 'gl-fill';
 
         view.registerDomEvent(nameInput, 'change', async () => {
-            const newValue = nameInput.value;
-                if (newValue !== concept.name) {
-                    concept.name = newValue;
-                    await view.onSave();
+                const newValue = nameInput.value;
+
+                if (ConceptService.GetConceptByName(this.life, newValue) !== undefined) {
+                    nameInput.value = concept.name;
+                    new Notice('That name has already been used!');
+                    return;
                 }
+                
+                concept.name = newValue;
+                await view.onSave();
             }
         )
     }

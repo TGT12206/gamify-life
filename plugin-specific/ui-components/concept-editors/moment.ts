@@ -3,7 +3,7 @@ import { ConceptEditorUIMaker } from "./concept";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Moment } from "plugin-specific/models/moment";
 import { setIcon } from "obsidian";
-import { ConceptKeyListEditor } from "../list-editors/concept-key";
+import { ConceptNameListEditor } from "../list-editors/concept-name";
 import { GainedSkillUnitListEditor } from "../list-editors/gained-skill-unit";
 
 export class MomentEditorUIMaker extends ConceptEditorUIMaker {
@@ -17,7 +17,7 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
     protected MakeConceptKeysEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
         div.className = 'hbox';
         HTMLHelper.CreateNewTextDiv(div, 'Concepts involved:');
-        const listEditor = new ConceptKeyListEditor(moment, div.createDiv(), moment.conceptKeys, view.onSave);
+        const listEditor = new ConceptNameListEditor(moment, div.createDiv(), moment.conceptNames, view.onSave);
         listEditor.Render(view);
     }
 

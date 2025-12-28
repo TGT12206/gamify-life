@@ -2,13 +2,12 @@ import { Life } from "plugin-specific/models/life";
 import { GamifyLifeView } from "../gamify-life-view";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { Concept } from "plugin-specific/models/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { KeyValueGridEditor } from "./module";
 import { ItemView, Notice, setIcon } from "obsidian";
 import { ListEditor } from "ui-patterns/list-editor";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
-import { KeyService } from "plugin-specific/services/key";
 import { ConceptService } from "plugin-specific/services/concept";
+import { GridEditor } from "ui-patterns/grid-editor";
+import { KeyValue } from "plugin-specific/models/key-value";
 
 export function DisplaySearchModule(view: GamifyLifeView, life: Life, div: HTMLDivElement) {
     div.className = 'gl-scroll gl-fill gl-outer-div vbox';
@@ -17,7 +16,7 @@ export function DisplaySearchModule(view: GamifyLifeView, life: Life, div: HTMLD
     const resultsDiv = div.createDiv('gl-outer-div vbox');
     
     const searchInfo = new SearchContext(life);
-    const resultsSection = new SearchConceptKVGridEditor(
+    const resultsSection = new SearchCardGridEditor(
         searchInfo, resultsDiv, life.concepts, view.onSave
     );
 
@@ -26,7 +25,7 @@ export function DisplaySearchModule(view: GamifyLifeView, life: Life, div: HTMLD
     resultsSection.Render(view);
 }
 
-function DisplaySearchBar(view: GamifyLifeView, div: HTMLDivElement, context: SearchContext, resultsSection: SearchConceptKVGridEditor) {
+function DisplaySearchBar(view: GamifyLifeView, div: HTMLDivElement, context: SearchContext, resultsSection: SearchCardGridEditor) {
     div.className = 'gl-outer-div gl-bordered vbox';
     
     const searchRow = div.createDiv('gl-outer-div hbox');
@@ -116,7 +115,7 @@ function SearchForResults(context: SearchContext) {
     const hasCategories = context.categories.length > 0;
 
     for (let i = 0; i < context.life.concepts.length; i++) {
-        const concept = context.life.concepts[i].value;
+        const concept = context.life.concepts[i];
         if (hasCategories) {
             const matchesCategory = context.categories.every(catKey =>
                 concept.categoryKeys.includes(catKey)
@@ -124,7 +123,7 @@ function SearchForResults(context: SearchContext) {
             if (!matchesCategory) continue;
         }
         if (term !== '') {
-            const inKey = context.life.concepts[i].key.toLowerCase().includes(term);
+            const inKey = context.life.concepts[i].name.toLowerCase().includes(term);
             const inName = concept.name.toLowerCase().includes(term);
             const inDescription = concept.description.toLowerCase().includes(term);
             const inAliases = concept.aliases.some(alias =>
@@ -140,7 +139,7 @@ function SearchForResults(context: SearchContext) {
     }
 }
 
-export class SearchConceptKVUIMaker extends ObjUIMaker<KeyValue<Concept>> {
+export class SearchCardUIMaker extends ObjUIMaker<Concept> {
     get context(): SearchContext {
         return <SearchContext> this.globalData;
     }
@@ -162,66 +161,10 @@ export class SearchConceptKVUIMaker extends ObjUIMaker<KeyValue<Concept>> {
         this.context = context;
     }
 
-    private ChangeKey(
-        index: number,
-        newKey: string
-    ) {
-        const mainArray = this.life.concepts;
-        const existingKeyIndex = KeyService.FindKey(mainArray, newKey);
-        if (existingKeyIndex !== -1) {
-            new Notice('This key is already registered!');
-            throw new Error('This key is already registered!');
-        }
-        mainArray[index].key = newKey;
-    }
-
-    private async MakeKeyUI(
-        view: ItemView,
-        keyDiv: HTMLDivElement,
-        index: number,
-        onSave: () => Promise<void>
-    ) {
-        const mainArray = this.life.concepts;
-        if (mainArray[index].key === 'Self') {
-            return HTMLHelper.CreateNewTextDiv(keyDiv, 'Key: Self');
-        }
-        HTMLHelper.CreateNewTextDiv(keyDiv, 'Key');
-        const keyInput = keyDiv.createEl('input', { type: 'text', value: mainArray[index].key } );
-        view.registerDomEvent(keyInput, 'change', async () => {
-            try {
-                KeyService.CheckIfDuplicateKey(this.life.concepts, keyInput.value);
-                this.ChangeKey(index, keyInput.value);
-                await onSave();
-            } catch {
-                keyInput.value = mainArray[index].key;
-            }
-        });
-    }
-
-    private MakeConceptUI(
-        view: ItemView,
-        valueDiv: HTMLDivElement,
-        index: number,
-        onSave: () => Promise<void>
-    ) {
-        const mainArray = this.life.concepts;
-        HTMLHelper.CreateNewTextDiv(valueDiv, 'Name');
-        const nameInput = valueDiv.createEl('input', { type: 'text', value: mainArray[index].value.name } );
-        view.registerDomEvent(nameInput, 'change', async () => {
-            try {
-                KeyService.CheckIfDuplicateValue(this.life.concepts, nameInput.value, (a, b) => { return a.name === b });
-                this.life.concepts[index].value.name = nameInput.value;
-                await onSave();
-            } catch {
-                nameInput.value = mainArray[index].value.name;
-            }
-        });
-    }
-
     override MakeDeleteButton(
         view: ItemView,
         div: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number,
         onRefresh: () => Promise<void>
     ) {
@@ -237,7 +180,7 @@ export class SearchConceptKVUIMaker extends ObjUIMaker<KeyValue<Concept>> {
     override async MakeUI(
         view: GamifyLifeView,
         itemDiv: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number,
         onSave: () => Promise<void>,
         onRefresh: () => Promise<void>
@@ -252,10 +195,22 @@ export class SearchConceptKVUIMaker extends ObjUIMaker<KeyValue<Concept>> {
         this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
         this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
         
-        this.MakeKeyUI(view, itemDiv.createDiv('hbox gl-outer-div'), index, onSave);
-        this.MakeConceptUI(view, itemDiv.createDiv('hbox gl-outer-div'), index, onSave);
+        const bottomDiv = itemDiv.createDiv('gl-outer-div ' + (this.isVertical ? 'hbox' : 'vbox'));
 
-        if (mainArray[index].key !== 'Self') {
+        if (mainArray[index].name === 'Self') {
+            HTMLHelper.CreateNewTextDiv(bottomDiv, 'Name: Self');
+        } else {
+            HTMLHelper.CreateNewTextDiv(bottomDiv, 'Name');
+            const nameInput = bottomDiv.createEl('input', { type: 'text', value: mainArray[index].name } );
+            view.registerDomEvent(nameInput, 'change', async () => {
+                if (ConceptService.GetConceptByName(this.life, nameInput.value) === undefined) {
+                    ConceptService.ChangeConceptName(this.life, index, nameInput.value);
+                    await onSave();
+                } else {
+                    nameInput.value = mainArray[index].name;
+                    new Notice('That name has already been used!');
+                }
+            });
             this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
         }
     }
@@ -263,28 +218,28 @@ export class SearchConceptKVUIMaker extends ObjUIMaker<KeyValue<Concept>> {
     private MakeEditButton(
         view: GamifyLifeView,
         div: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number
     ) {
         const editButton = div.createEl('button');
         setIcon(editButton, 'pencil-line');
         view.registerDomEvent(editButton, 'click', () => {
-            view.OpenCorrectConceptEditor(mainArray[index].value);
+            view.OpenCorrectConceptEditor(mainArray[index]);
         });
     }
 }
 
-export class SearchConceptKVGridEditor extends KeyValueGridEditor<Concept> {
+export class SearchCardGridEditor extends GridEditor<Concept> {
     get context(): SearchContext {
         return <SearchContext> this.globalData;
     }
     set context(newContext: SearchContext) {
         this.globalData = newContext;
     }
-    override get life(): Life {
+    get life(): Life {
         return this.context.life;
     }
-    override set life(newLife: Life) {
+    set life(newLife: Life) {
         this.context.life = newLife;
     }
     get searchResults(): number[] {
@@ -293,16 +248,12 @@ export class SearchConceptKVGridEditor extends KeyValueGridEditor<Concept> {
     constructor(
         context: SearchContext,
         parentDiv: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         onSave: () => Promise<void>
     ) {
-        const uiMaker = new SearchConceptKVUIMaker(context);
-        super(context, parentDiv, mainArray, () => { return new KeyValue<Concept>('', new Concept()) } , uiMaker, onSave);
+        const uiMaker = new SearchCardUIMaker(context);
+        super(context, parentDiv, mainArray, () => { return new Concept() } , uiMaker, onSave);
         this.context = context;
-        this.defaultValue = new Concept();
-        this.compareFunction = (a: Concept, b: Concept) => {
-            return a.name === b.name;
-        }
         this.isVertical = true;
         uiMaker.isVertical = true;
     }
@@ -331,5 +282,21 @@ export class SearchConceptKVGridEditor extends KeyValueGridEditor<Concept> {
             );
         }
         this.listDiv.scrollTop = scrollTop;
+    }
+    protected override CreateAddButton(view: ItemView): void {
+        const mainArray = this.mainArray;
+        const addButton = this.parentDiv.createEl('button');
+        setIcon(addButton, 'plus');
+
+        view.registerDomEvent(addButton, 'click', async () => {
+            if (ConceptService.GetConceptByName(this.life, '') !== undefined) {
+                new Notice('Name the empty entry first!');
+                return;
+            }
+            const newItem = await this.newObjMaker();
+            mainArray.push(newItem);
+            await this.onSave();
+            await this.RefreshList(view);
+        });
     }
 }

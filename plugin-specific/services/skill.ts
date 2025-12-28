@@ -1,5 +1,6 @@
 import { Life } from "plugin-specific/models/life";
 import { Rank, Skill } from "plugin-specific/models/skill";
+import { ConceptService } from "./concept";
 
 export interface RankProgress {
     current: Rank | null;
@@ -11,24 +12,21 @@ export class SkillService {
     static CalculateNumberOfUnits(life: Life, skill: Skill): number {
         let totalUnits = 0;
 
-        const skillKV = life.concepts.find(kv => kv.value === skill);
-        if (!skillKV) return 0;
-        const skillKey = skillKV.key;
-
         for (let i = 0; i < life.moments.length; i++) {
             const moment = life.moments[i];
-            const gainedUnit = moment.skillUnitsGained.find(su => su.skillKey === skillKey);
-            if (gainedUnit) {
+            const gainedUnit = moment.skillUnitsGained.find(su => su.skillName === skill.name);
+
+            if (gainedUnit !== undefined) {
                 totalUnits += gainedUnit.unitsGained;
             }
         }
 
         for (let i = 0; i < skill.subskills.length; i++) {
             const subskillRef = skill.subskills[i];
-            const subskillKV = life.concepts.find(kv => kv.key === subskillRef.key);
+            const subskill = ConceptService.GetConceptByName(life, subskillRef.name);
             
-            if (subskillKV) {
-                const subskillTotal = this.CalculateNumberOfUnits(life, <Skill> subskillKV.value);
+            if (subskill !== undefined) {
+                const subskillTotal = this.CalculateNumberOfUnits(life, <Skill> subskill);
                 totalUnits += (subskillTotal * subskillRef.weight);
             }
         }
@@ -37,10 +35,12 @@ export class SkillService {
     }
     static GetRankProgress(life: Life, skill: Skill, totalUnits: number): RankProgress {
         const ranks: Rank[] = [];
-        for (const key of skill.rankKeys) {
-            const rankKV = life.concepts.find(kv => kv.key === key);
-            if (rankKV) {
-                ranks.push(<Rank> rankKV.value);
+        for (let i = 0; i < skill.rankNames.length; i++) {
+            const rankName = skill.rankNames[i];
+            const rank = ConceptService.GetConceptByName(life, rankName);
+            
+            if (rank !== undefined) {
+                ranks.push(<Rank> rank);
             }
         }
         const sortedRanks = ranks.sort((a, b) => a.threshold - b.threshold);

@@ -23,12 +23,12 @@ export class MediaKeyService {
 
         life.mediaPaths.splice(index, 1);
 
-        for (const item of life.concepts) {
-            const concept = item.value;
+        for (let i = 0; i < life.concepts.length; i++) {
+            const concept = life.concepts[i];
             concept.mediaKeys = concept.mediaKeys.filter(mk => mk !== keyToDelete);
             if (concept.categoryKeys.contains('Observation')) {
                 const observation = <Observation> concept;
-                observation.evidenceList = observation.evidenceList.filter(e => !(e.sourceType === 'Media' && e.sourceKey === keyToDelete));
+                observation.evidenceList = observation.evidenceList.filter(e => !(e.sourceType === 'Media' && e.source === keyToDelete));
             }
         }
     }
@@ -52,8 +52,8 @@ export class MediaKeyService {
 
         life.mediaPaths[index].key = newKey;
 
-        for (const item of life.concepts) {
-            const concept = item.value;
+        for (let i = 0; i < life.concepts.length; i++) {
+            const concept = life.concepts[i];
             KeyService.ChangeKeyReference(concept.mediaKeys, keyToChange, newKey);
 
             if (concept.categoryKeys.contains('Observation')) {
@@ -61,7 +61,7 @@ export class MediaKeyService {
                 KeyService.ChangeInnerKeyReference(
                     observation.evidenceList,
                     (e) => { return e.sourceType === 'Media' && e.sourceKey === keyToChange },
-                    (i) => { return observation.evidenceList[i].sourceKey = newKey }
+                    (i) => { return observation.evidenceList[i].source = newKey }
                 );
             }
         }

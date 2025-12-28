@@ -1,13 +1,11 @@
 import { Concept } from "plugin-specific/models/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
 import { Life } from "plugin-specific/models/life";
 import { RelatedObservationCardUIMaker } from "../ui-makers/related-observation";
 import { Observation } from "plugin-specific/models/observation";
 import { GamifyLifeView } from "../gamify-life-view";
 import { ListEditor } from "ui-patterns/list-editor";
-import { KeyService } from "plugin-specific/services/key";
 
-export class RelatedObservationGridEditor extends ListEditor<KeyValue<Concept>> {
+export class RelatedObservationGridEditor extends ListEditor<Concept> {
     private targetConcept: Concept;
 
     constructor(
@@ -17,9 +15,9 @@ export class RelatedObservationGridEditor extends ListEditor<KeyValue<Concept>> 
         onSave: () => Promise<void>
     ) {
         const uiMaker = new RelatedObservationCardUIMaker();
-        const dummyMaker = () => new KeyValue('', new Observation());
+        const newObjMaker = () => new Observation();
         
-        super(undefined, parentDiv, life.concepts, dummyMaker, uiMaker, onSave);
+        super(undefined, parentDiv, life.concepts, newObjMaker, uiMaker, onSave);
         
         this.targetConcept = targetConcept;
         this.isVertical = true;
@@ -31,33 +29,27 @@ export class RelatedObservationGridEditor extends ListEditor<KeyValue<Concept>> 
         this.listDiv.empty();
         
         let relatedIndices: number[] = [];
-
-        const index = KeyService.FindValue(view.life.concepts, this.targetConcept);
-
-        if (index === -1) {
-            return;
-        }
-
-        const targetKey = view.life.concepts[index].key
+        
+        const targetName = this.targetConcept.name;
 
         for (let i = 0; i < view.life.concepts.length; i++) {
-            const concept = view.life.concepts[i].value;
+            const concept = view.life.concepts[i];
             
             if (concept.categoryKeys.contains('Observation')) {
                 const obs = <Observation> concept;
-                if (obs.conceptKeys.contains(targetKey)) {
+                if (obs.conceptNames.contains(targetName)) {
                     relatedIndices.push(i);
                 }
             }
         }
 
-        for (const index of relatedIndices) {
+        for (let i = 0; i < relatedIndices.length; i++) {
             const itemContainer = this.listDiv.createDiv('gl-outer-div vbox');
             await this.objUIMaker.MakeUI(
                 view,
                 itemContainer,
                 this.mainArray,
-                index,
+                relatedIndices[i],
                 this.onSave,
                 async () => {
                     await this.onSave();

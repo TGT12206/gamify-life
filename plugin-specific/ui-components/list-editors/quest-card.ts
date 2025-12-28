@@ -2,15 +2,13 @@ import { ListEditor } from "ui-patterns/list-editor";
 import { Concept } from "plugin-specific/models/concept";
 import { QuestCardUIMaker } from "../ui-makers/quest-card";
 import { Quest } from "plugin-specific/models/quest";
-import { ItemView } from "obsidian";
 import { GamifyLifeView } from "../gamify-life-view";
 import { QuestService } from "plugin-specific/services/quest";
-import { KeyValue } from "plugin-specific/models/key-value";
 
-export class QuestCardListEditor extends ListEditor<KeyValue<Concept>> {
-    constructor(parentDiv: HTMLDivElement, concepts: KeyValue<Concept>[], onSave: () => Promise<void>) {
+export class QuestCardListEditor extends ListEditor<Concept> {
+    constructor(parentDiv: HTMLDivElement, concepts: Concept[], onSave: () => Promise<void>) {
         const uiMaker = new QuestCardUIMaker();
-        super(undefined, parentDiv, concepts, () => { return new KeyValue('', new Quest()) }, uiMaker, onSave);
+        super(undefined, parentDiv, concepts, () => { return new Quest() }, uiMaker, onSave);
         this.isVertical = true;
         uiMaker.isVertical = false;
         this.enableAddButton = false;
@@ -20,10 +18,10 @@ export class QuestCardListEditor extends ListEditor<KeyValue<Concept>> {
 
         const questData = [];
         for (let i = 0; i < this.mainArray.length; i++) {
-            if (!this.mainArray[i].value.categoryKeys.contains('Quest')) {
+            if (!this.mainArray[i].categoryKeys.contains('Quest')) {
                 continue;
             }
-            const q = <Quest> view.life.concepts[i].value;
+            const q = <Quest> view.life.concepts[i];
             questData.push({
                 index: i,
                 isDue: !QuestService.IsCompleted(q),

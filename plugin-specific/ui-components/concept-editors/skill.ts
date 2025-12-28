@@ -5,7 +5,7 @@ import { Rank, Skill } from "plugin-specific/models/skill";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { ListEditor } from "ui-patterns/list-editor";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
+import { ConceptSuggest } from "../suggest/concept-suggest";
 import { ConceptService } from "plugin-specific/services/concept";
 import { KeyValue } from "plugin-specific/models/key-value";
 import { SubskillKeySuggest } from "../suggest/subskill-key-suggest";
@@ -61,12 +61,12 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
     MakeUnitEditor(view: GamifyLifeView, div: HTMLDivElement, skill: Skill) {
         div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'XP unit for this skill:');
-        const input = div.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(view.life, skill.unitKey) } );
-        const updateKey = async (conceptKV: KeyValue<Concept>) => {
-            skill.unitKey = conceptKV.key;
+        const input = div.createEl('input', { type: 'text', value: skill.unitName } );
+        const updateUnit = async (newUnit: Concept) => {
+            skill.unitName = newUnit.name;
             await view.onSave();
         };
-        new ConceptKeySuggest(input, view.life, skill, view.app, updateKey, ['Skill Unit']);
+        new ConceptSuggest(input, view.life, skill, view.app, updateUnit, ['Skill Unit']);
     }
     
     MakeRanksEditor(
@@ -76,7 +76,7 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
     ) {
         div.className = 'hbox';
         HTMLHelper.CreateNewTextDiv(div, 'Ranks:');
-        const listEditor = new RankListEditor(div.createDiv(), skill.rankKeys, view.onSave);
+        const listEditor = new RankListEditor(div.createDiv(), skill.rankNames, view.onSave);
         listEditor.Render(view);
     }
 

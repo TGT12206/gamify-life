@@ -5,8 +5,7 @@ import { GamifyLifeView } from "../gamify-life-view";
 import { KeyService } from "plugin-specific/services/key";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { ConceptService } from "plugin-specific/services/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
+import { ConceptSuggest } from "../suggest/concept-suggest";
 
 export class GainedSkillUnitUIMaker extends ObjUIMaker<GainedSkillUnit> {
     get moment(): Moment {
@@ -29,10 +28,8 @@ export class GainedSkillUnitUIMaker extends ObjUIMaker<GainedSkillUnit> {
         const unitGained = mainArray[index];
         const getUnitType = (unitGained: GainedSkillUnit) => {
             try {
-                const skillIndex = KeyService.FindKey(life.concepts, unitGained.skillKey);
-                const skill = <Skill> life.concepts[skillIndex].value;
-                const unitTypeIndex = KeyService.FindKey(life.concepts, skill.unitKey);
-                const unitType = <SkillUnit> life.concepts[unitTypeIndex].value;
+                const skill = <Skill> ConceptService.GetConceptByName(life, unitGained.skillName);
+                const unitType = <SkillUnit> ConceptService.GetConceptByName(life, skill.unitName);
                 return unitType;
             } catch {
                 return undefined
@@ -55,18 +52,18 @@ export class GainedSkillUnitUIMaker extends ObjUIMaker<GainedSkillUnit> {
 
         const numUnitsDiv = itemDiv.createDiv('hbox');
         HTMLHelper.CreateNewTextDiv(itemDiv, 'Skill:');
-        const skillKeyInput = itemDiv.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(life, unitGained.skillKey) } );
+        const skillKeyInput = itemDiv.createEl('input', { type: 'text', value: unitGained.skillName } );
 
         const unitGainedInput = numUnitsDiv.createEl('input', { type: 'number', value: unitGained.unitsGained + '' } );
         HTMLHelper.CreateNewTextDiv(numUnitsDiv, unitType ? unitType.name : 'Hours Spent');
 
         this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
 
-        const updateSkillKey = async (skillKV: KeyValue<Skill>) => {
-            mainArray[index].skillKey = skillKV.key;
+        const updateSkillKey = async (skill: Skill) => {
+            mainArray[index].skillName = skill.name;
             await onSave();
         };
-        new ConceptKeySuggest(skillKeyInput, view.life, undefined, view.app, updateSkillKey, ['Skill']);
+        new ConceptSuggest(skillKeyInput, view.life, undefined, view.app, updateSkillKey, ['Skill']);
 
         view.registerDomEvent(unitGainedInput, 'change', async () => {
             unitGained.unitsGained = parseFloat(unitGainedInput.value);

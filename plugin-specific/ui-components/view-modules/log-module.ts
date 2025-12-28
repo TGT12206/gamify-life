@@ -1,6 +1,5 @@
 import { Life } from "plugin-specific/models/life";
 import { GamifyLifeView } from "../gamify-life-view";
-import { KeyValue } from "plugin-specific/models/key-value";
 import { Concept } from "plugin-specific/models/concept";
 import { Moment } from "plugin-specific/models/moment";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
@@ -22,19 +21,19 @@ export function DisplayLogModule(view: GamifyLifeView, life: Life, div: HTMLDivE
     listEditor.Render(view);
 
     view.registerDomEvent(submitButton, 'click', async () => {
-        life.concepts.push(new KeyValue(newMoment.startTime.toDateString() + '-' + newMoment.endTime.toDateString(), newMoment));
+        life.concepts.push(newMoment);
         DisplayLogModule(view, life, div);
     });
 }
 
-export class MomentCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
+export class MomentCardUIMaker extends ObjUIMaker<Concept> {
     override async MakeUI(
         view: GamifyLifeView,
         itemDiv: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number
     ): Promise<void> {
-        const moment = <Moment> mainArray[index].value;
+        const moment = <Moment> mainArray[index];
         itemDiv.classList.add('gl-bordered');
         itemDiv.classList.add('gl-fit-content');
         
@@ -42,19 +41,17 @@ export class MomentCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
         HTMLHelper.CreateNewTextDiv(itemDiv, moment.startTime.toDateString());
 
         view.registerDomEvent(nameButton, 'click', () => {
-            view.OpenCorrectConceptEditor(mainArray[index].value);
+            view.OpenCorrectConceptEditor(mainArray[index]);
         });
     }
 }
 
-export class MomentCardGridEditor extends GridEditor<KeyValue<Concept>> {
+export class MomentCardGridEditor extends GridEditor<Concept> {
     private defaultValue = new Moment();
-    constructor(parentDiv: HTMLDivElement, conceptKVs: KeyValue<Concept>[], onSave: () => Promise<void>) {
+    constructor(parentDiv: HTMLDivElement, conceptKVs: Concept[], onSave: () => Promise<void>) {
         const uiMaker = new MomentCardUIMaker();
         const newObjMaker = () => {
-            const newMoment = new Moment();
-            newMoment.categoryKeys.push('Moment');
-            return new KeyValue('', newMoment);
+            return new Moment();
         }
         super(undefined, parentDiv, conceptKVs, newObjMaker, uiMaker, onSave);
         this.isVertical = true;
@@ -73,14 +70,14 @@ export class MomentCardGridEditor extends GridEditor<KeyValue<Concept>> {
         let momentIndices = [];
 
         for (let i = 0; i < view.life.concepts.length; i++) {
-            if (!view.life.concepts[i].value.categoryKeys.contains('Moment')) {
+            if (!view.life.concepts[i].categoryKeys.contains('Moment')) {
                 continue;
             }
             momentIndices.push(i);
         }
         
         const sortedIndices = [...momentIndices].sort((a, b) =>
-            (<Moment> view.life.concepts[b].value).startTime.getTime() - (<Moment> view.life.concepts[a].value).startTime.getTime()
+            (<Moment> view.life.concepts[b]).startTime.getTime() - (<Moment> view.life.concepts[a]).startTime.getTime()
         );
 
         for (let i = 0; i < sortedIndices.length; i++) {

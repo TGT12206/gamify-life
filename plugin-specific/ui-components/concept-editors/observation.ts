@@ -1,7 +1,7 @@
 import { GamifyLifeView } from "../gamify-life-view";
 import { ConceptEditorUIMaker } from "./concept";
 import { Observation } from "plugin-specific/models/observation";
-import { ConceptKeyListEditor } from "../list-editors/concept-key";
+import { ConceptNameListEditor } from "../list-editors/concept-name";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { EvidenceListEditor } from "../list-editors/evidence";
 
@@ -15,7 +15,7 @@ export class ObservationEditorUIMaker extends ConceptEditorUIMaker {
     protected MakeConceptKeysEditor(view: GamifyLifeView, div: HTMLDivElement, observation: Observation) {
         div.className = 'hbox';
         HTMLHelper.CreateNewTextDiv(div, 'Concepts involved:');
-        const listEditor = new ConceptKeyListEditor(observation, div.createDiv(), observation.conceptKeys, view.onSave);
+        const listEditor = new ConceptNameListEditor(observation, div.createDiv(), observation.conceptNames, view.onSave);
         listEditor.Render(view);
     }
 

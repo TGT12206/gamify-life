@@ -5,9 +5,8 @@ import { EvidenceType, evidenceTypes } from "plugin-specific/models/const";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { KeyValue } from "plugin-specific/models/key-value";
 import { MediaKeySuggest } from "../suggest/media-key-suggest";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
-import { ConceptService } from "plugin-specific/services/concept";
 import { Concept } from "plugin-specific/models/concept";
+import { ConceptSuggest } from "../suggest/concept-suggest";
 
 export class EvidenceUIMaker extends ObjUIMaker<Evidence> {
     get root(): Concept | undefined {
@@ -62,25 +61,29 @@ export class EvidenceUIMaker extends ObjUIMaker<Evidence> {
         div.empty();
         const evidence = mainArray[index];
         if (evidence.sourceType === 'Unknown') {
-            evidence.sourceKey = null;
+            evidence.source = null;
             HTMLHelper.CreateNewTextDiv(div, 'Source unknown');
             return;
         }
-        if (evidence.sourceKey === null) {
-            evidence.sourceKey = '';
+        if (evidence.source === null) {
+            evidence.source = '';
         }
-        const sourceInput = div.createEl('input', { type: 'text', value: evidence.sourceKey } );
-        const updateSource = async (kv: KeyValue<any>) => {
-            mainArray[index].sourceKey = kv.key;
-            await view.onSave();
-        };
+        const sourceInput = div.createEl('input', { type: 'text', value: evidence.source } );
         if (evidence.sourceType === 'Media') {
+            const updateSource = async (kv: KeyValue<string>) => {
+                mainArray[index].source = kv.key;
+                await view.onSave();
+            };
             new MediaKeySuggest(sourceInput, div.createDiv('vbox'), view.life, updateSource, view.app);
             return;
         }
         if (evidence.sourceType === 'Concept') {
-            sourceInput.value = ConceptService.GetNameFromKey(view.life, evidence.sourceKey);
-            new ConceptKeySuggest(sourceInput, view.life, this.root, view.app, updateSource);
+            const updateSource = async (concept: Concept) => {
+                mainArray[index].source = concept.name;
+                await view.onSave();
+            };
+            sourceInput.value = evidence.source;
+            new ConceptSuggest(sourceInput, view.life, this.root, view.app, updateSource);
             return;
         }
     }

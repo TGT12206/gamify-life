@@ -4,19 +4,19 @@ import { GridEditor } from "ui-patterns/grid-editor";
 import { SkillCardUIMaker } from "../ui-makers/skill-card";
 import { Skill } from "plugin-specific/models/skill";
 import { GamifyLifeView } from "../gamify-life-view";
-import { KeyService } from "plugin-specific/services/key";
 import { Notice, setIcon } from "obsidian";
+import { ConceptService } from "plugin-specific/services/concept";
 
-export class SkillCardGridEditor extends GridEditor<KeyValue<Concept>> {
+export class SkillCardGridEditor extends GridEditor<Concept> {
     private defaultValue = new Skill();
-    constructor(parentDiv: HTMLDivElement, conceptKVs: KeyValue<Concept>[], onSave: () => Promise<void>) {
+    constructor(parentDiv: HTMLDivElement, concepts: Concept[], onSave: () => Promise<void>) {
         const uiMaker = new SkillCardUIMaker();
         const newObjMaker = () => {
             const newSkill = new Skill();
             newSkill.categoryKeys.push('Skill');
-            return new KeyValue('', newSkill);
+            return newSkill;
         }
-        super(undefined, parentDiv, conceptKVs, newObjMaker, uiMaker, onSave);
+        super(undefined, parentDiv, concepts, newObjMaker, uiMaker, onSave);
         this.isVertical = true;
         uiMaker.isVertical = true;
     }
@@ -30,7 +30,7 @@ export class SkillCardGridEditor extends GridEditor<KeyValue<Concept>> {
         }
         
         for (let i = 0; i < this.mainArray.length; i++) {
-            if (!this.mainArray[i].value.categoryKeys.contains('Skill')) {
+            if (!this.mainArray[i].categoryKeys.contains('Skill')) {
                 continue;
             }
             const itemContainer = this.listDiv.createDiv('gl-outer-div gl-scroll ' + (this.objUIMaker.isVertical ? 'vbox' : 'hbox'));
@@ -56,14 +56,14 @@ export class SkillCardGridEditor extends GridEditor<KeyValue<Concept>> {
         addButton.id = 'gl-grid-add-button';
 
         view.registerDomEvent(addButton, 'click', async () => {
-            if (KeyService.HasKey(mainArray, '') || KeyService.HasValue(mainArray, this.defaultValue, (a, b) => { return a.name === b.name } )) {
-                new Notice('Name the empty entry first!');
+            if (ConceptService.GetConceptByName(view.life, '') !== undefined) {
+                new Notice('Name the unnamed concept first!');
                 return;
             }
             const newItem = await this.newObjMaker();
             mainArray.push(newItem);
             await this.onSave();
-            view.OpenCorrectConceptEditor(newItem.value);
+            view.OpenCorrectConceptEditor(newItem);
         });
     }
 }

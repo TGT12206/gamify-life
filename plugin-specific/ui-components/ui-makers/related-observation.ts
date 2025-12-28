@@ -3,7 +3,6 @@ import { KeyValue } from "plugin-specific/models/key-value";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Observation } from "plugin-specific/models/observation";
-import { HTMLHelper } from "ui-patterns/html-helper";
 
 export class RelatedObservationCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
     override async MakeUI(

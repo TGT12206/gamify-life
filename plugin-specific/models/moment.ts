@@ -5,5 +5,5 @@ export class Moment extends Concept {
     startTime: Date = new Date();
     endTime: Date = new Date();
     skillUnitsGained: GainedSkillUnit[] = [];
-    conceptKeys: string[] = [];
+    conceptNames: string[] = [];
 }

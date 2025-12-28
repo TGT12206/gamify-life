@@ -1,11 +1,9 @@
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GamifyLifeView } from "../gamify-life-view";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
+import { ConceptSuggest } from "../suggest/concept-suggest";
 import { Concept } from "plugin-specific/models/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { ConceptService } from "plugin-specific/services/concept";
 
-export class ConceptKeyUIMaker extends ObjUIMaker<string> {
+export class ConceptNameUIMaker extends ObjUIMaker<string> {
     get root(): Concept | undefined {
         return <Concept | undefined> this.globalData;
     }
@@ -28,14 +26,14 @@ export class ConceptKeyUIMaker extends ObjUIMaker<string> {
         this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
         this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
         
-        const input = itemDiv.createEl('input', { type: 'text', value: ConceptService.GetNameFromKey(view.life, mainArray[index]) } );
+        const input = itemDiv.createEl('input', { type: 'text', value: mainArray[index] } );
 
         this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
 
-        const updateKey = async (conceptKV: KeyValue<Concept>) => {
-            mainArray[index] = conceptKV.key;
+        const updateName = async (concept: Concept) => {
+            mainArray[index] = concept.name;
             await onSave();
         };
-        new ConceptKeySuggest(input, view.life, this.root, view.app, updateKey);
+        new ConceptSuggest(input, view.life, this.root, view.app, updateName);
     }
 }

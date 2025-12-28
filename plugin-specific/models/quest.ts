@@ -2,6 +2,7 @@ import { Concept } from "./concept";
 import { QuestType } from "./const";
 
 export class Quest extends Concept {
+    override categoryKeys: string[] = ['Quest'];
     type: QuestType = 'one-off';
     interval: number = 1;
     startTimes: StartTime[] = [];

@@ -6,7 +6,7 @@ export class CategoryService {
      * Deletes the category key from the plugin, propagating the change.
      * @param category either the key or the index of the category
      */
-    static DeleteCategoryKey(life: Life, category: number | string): void {
+    static DeleteCategory(life: Life, category: number | string): void {
         let index: number;
         let keyToDelete: string;
 
@@ -21,8 +21,8 @@ export class CategoryService {
 
         life.categories.splice(index, 1);
 
-        for (const item of life.concepts) {
-            const concept = item.value;
+        for (let i = 0; i < life.concepts.length; i++) {
+            const concept = life.concepts[i];
             concept.categoryKeys = concept.categoryKeys.filter(mk => mk !== keyToDelete);
         }
     }
@@ -46,8 +46,8 @@ export class CategoryService {
 
         life.categories[index].key = newKey;
 
-        for (const item of life.concepts) {
-            const concept = item.value;
+        for (let i = 0; i < life.concepts.length; i++) {
+            const concept = life.concepts[i];
             KeyService.ChangeKeyReference(concept.categoryKeys, keyToChange, newKey);
         }
     }

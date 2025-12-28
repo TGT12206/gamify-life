@@ -15,8 +15,8 @@ function CreateDefaultLife() {
 		defaultLife.categories.push(new KeyValue(cat, cat));
 	});
 	const self = new Concept();
-	self.name = 'Player';
-	defaultLife.concepts.push(new KeyValue('Self', self));
+	self.name = 'Self';
+	defaultLife.concepts.push(self);
 	return defaultLife;
 }
 
@@ -110,24 +110,24 @@ export default class GamifyLife extends Plugin {
 		if (this.life.categories.length === 0) {
 			this.life = CreateDefaultLife();
 		}
-        this.life.concepts.forEach((conceptKV: KeyValue<Concept>) => {
-			const concept = conceptKV.value;
+		for (let i = 0; i < this.life.concepts.length; i++) {
+			const concept = this.life.concepts[i];
 			if (concept.categoryKeys.contains('Skill')) {
-		        conceptKV.value = Object.assign(new Skill(), conceptKV.value);
+		        this.life.concepts[i] = Object.assign(new Skill(), concept);
 			} else if (concept.categoryKeys.contains('Skill Rank')) {
-		        conceptKV.value = Object.assign(new Rank(), conceptKV.value);
+		        this.life.concepts[i] = Object.assign(new Rank(), concept);
 			} else if (concept.categoryKeys.contains('Skill Unit')) {
-		        conceptKV.value = Object.assign(new SkillUnit(), conceptKV.value);
+		        this.life.concepts[i] = Object.assign(new SkillUnit(), concept);
 			} else if (concept.categoryKeys.contains('Moment')) {
-		        conceptKV.value = Object.assign(new Moment(), conceptKV.value);
-                (<Moment> conceptKV.value).startTime = new Date((<Moment> conceptKV.value).startTime);
-                (<Moment> conceptKV.value).endTime = new Date((<Moment> conceptKV.value).endTime);
+		        this.life.concepts[i] = Object.assign(new Moment(), concept);
+                (<Moment> concept).startTime = new Date((<Moment> concept).startTime);
+                (<Moment> concept).endTime = new Date((<Moment> concept).endTime);
 			} else if (concept.categoryKeys.contains('Observation')) {
-		        conceptKV.value = Object.assign(new Observation(), conceptKV.value);
+		        this.life.concepts[i] = Object.assign(new Observation(), concept);
 			} else if (concept.categoryKeys.contains('Quest')) {
-		        conceptKV.value = Object.assign(new Quest(), conceptKV.value);
+		        this.life.concepts[i] = Object.assign(new Quest(), concept);
 			}
-        });
+        }
     }
 
 	async savePluginData() {

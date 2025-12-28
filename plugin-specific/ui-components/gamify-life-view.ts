@@ -15,7 +15,6 @@ import { ObservationEditorUIMaker } from './concept-editors/observation';
 import { QuestEditorUIMaker } from './concept-editors/quest';
 import { DescribableEditorUIMaker } from './concept-editors/describable';
 import { BaseCategories } from 'plugin-specific/models/const';
-import { KeyService } from 'plugin-specific/services/key';
 import { Moment } from 'plugin-specific/models/moment';
 import { Observation } from 'plugin-specific/models/observation';
 import { Quest } from 'plugin-specific/models/quest';
@@ -23,6 +22,7 @@ import { Rank, Skill, SkillUnit } from 'plugin-specific/models/skill';
 import { DisplaySelfModule } from './view-modules/self-module';
 import { DisplayLogModule } from './view-modules/log-module';
 import { DisplayQuestModule } from './view-modules/quest-module';
+import { ConceptService } from 'plugin-specific/services/concept';
 
 export const VIEW_TYPE_GAMIFY_LIFE = 'gamify-life';
 const VIEW_DISPLAY_NAME = 'Gamify Life';
@@ -157,10 +157,9 @@ export class GamifyLifeView extends ItemView {
     OpenCorrectConceptEditor(concept: Concept) {
         const div = this.moduleDiv;
         const concepts = this.life.concepts;
-        const index = KeyService.FindValue(this.life.concepts, concept);
-        const conceptKV = concepts[index];
-        if (conceptKV.key === 'Self') {
-            return this.selfEditorMaker.MakeUI(this, div, conceptKV.value);
+        const index = ConceptService.GetIndexByName(this.life, concept.name);
+        if (concept.name === 'Self') {
+            return this.selfEditorMaker.MakeUI(this, div, concept);
         }
         let newConcept;
         for (let i = 0; i < BaseCategories.length; i++) {
@@ -174,32 +173,32 @@ export class GamifyLifeView extends ItemView {
                 case 'Skill':
                     newConcept = new Skill();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.skillEditorMaker.MakeUI(this, div, newConcept);
                 case 'Skill Rank':
                     newConcept = new Rank();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.rankEditorMaker.MakeUI(this, div, newConcept);
                 case 'Skill Unit':
                     newConcept = new SkillUnit();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.skillUnitEditorMaker.MakeUI(this, div, newConcept);
                 case 'Moment':
                     newConcept = new Moment();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.momentEditorMaker.MakeUI(this, div, <Moment> newConcept);
                 case 'Observation':
                     newConcept = new Observation();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.observationEditorMaker.MakeUI(this, div, <Observation> newConcept);
                 case 'Quest':
                     newConcept = new Quest();
                     Object.assign(newConcept, concept);
-                    concepts[index].value = newConcept;
+                    concepts[index] = newConcept;
                     return this.questEditorMaker.MakeUI(this, div, <Quest> newConcept);
             }
         }

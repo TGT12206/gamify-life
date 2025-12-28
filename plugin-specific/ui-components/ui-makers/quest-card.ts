@@ -1,17 +1,14 @@
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GamifyLifeView } from "../gamify-life-view";
-import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
 import { Concept } from "plugin-specific/models/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { ConceptService } from "plugin-specific/services/concept";
 import { Quest } from "plugin-specific/models/quest";
 import { QuestService } from "plugin-specific/services/quest";
 
-export class QuestCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
+export class QuestCardUIMaker extends ObjUIMaker<Concept> {
     override async MakeUI(
         view: GamifyLifeView,
         itemDiv: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number,
         onSave: () => Promise<void>,
         onRefresh: () => Promise<void>
@@ -20,12 +17,12 @@ export class QuestCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
         itemDiv.classList.add('gl-outer-div');
         itemDiv.classList.add('gl-bordered');
         
-        const name = itemDiv.createEl('button', { text: ConceptService.GetNameFromKey(view.life, mainArray[index].key) } );
+        const name = itemDiv.createEl('button', { text: mainArray[index].name } );
 
-        this.MakeCompletionCheckbox(view, itemDiv.createDiv(), <Quest> mainArray[index].value, onRefresh);
+        this.MakeCompletionCheckbox(view, itemDiv.createDiv(), <Quest> mainArray[index], onRefresh);
 
         view.registerDomEvent(name, 'click', () => {
-            view.OpenCorrectConceptEditor(mainArray[index].value);
+            view.OpenCorrectConceptEditor(mainArray[index]);
         });
     }
         

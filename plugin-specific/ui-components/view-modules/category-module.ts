@@ -17,7 +17,7 @@ export function DisplayCategoryModule(view: GamifyLifeView, life: Life, div: HTM
 }
 class CategoryKVUIMaker extends KeyValueUIMaker<string> {
     protected override DeleteKey(index: number): void | Promise<void> {
-        CategoryService.DeleteCategoryKey(this.life, index);
+        CategoryService.DeleteCategory(this.life, index);
     }
     protected override ChangeKey(index: number, newKey: string): void | Promise<void> {
         CategoryService.ChangeCategoryKey(this.life, index, newKey);

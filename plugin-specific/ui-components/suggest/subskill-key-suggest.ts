@@ -1,38 +1,38 @@
 import { App, AbstractInputSuggest } from 'obsidian';
 import { Concept } from 'plugin-specific/models/concept';
-import { KeyValue } from 'plugin-specific/models/key-value';
 import { Life } from 'plugin-specific/models/life';
 import { Skill } from 'plugin-specific/models/skill';
 import { KeyService } from 'plugin-specific/services/key';
-import { ConceptKeySuggest } from './concept-key-suggest';
+import { ConceptSuggest } from './concept-suggest';
+import { ConceptService } from 'plugin-specific/services/concept';
 
-export class SubskillKeySuggest extends ConceptKeySuggest {
+export class SubskillSuggest extends ConceptSuggest {
     constructor(
         public inputEl: HTMLInputElement,
         public life: Life,
         public root: Skill,
         app: App,
-        public callback: (conceptKV: KeyValue<Concept>) => Promise<void> = async () => {}
+        public callback: (concept: Concept) => Promise<void> = async () => {}
     ) {
         super(inputEl, life, root, app, callback, ['Skill']);
     }
 
-    protected override CheckCategories(conceptKV: KeyValue<Concept>) {
-        const currCategories = conceptKV.value.categoryKeys;
+    protected override CheckCategories(concept: Concept) {
+        const currCategories = concept.categoryKeys;
         return currCategories.contains('Skill');
     }
 
-    protected override CheckIfRecursive(conceptKV: KeyValue<Concept>) {
-        if (conceptKV.value === this.root) return true;
+    protected override CheckIfRecursive(concept: Concept) {
+        if (concept === this.root) return true;
 
-        const concept = conceptKV.value;
         const skill = <Skill> concept;
 
-        for (const subskillKey of skill.subskills) {
-            const subskillKV = KeyService.Get(this.life.concepts, subskillKey.key);
+        for (let i = 0; i < skill.subskills.length; i++) {
+            const subskillName = skill.subskills[i].name;
+            const subskill = ConceptService.GetConceptByName(this.life, subskillName);
             
-            if (subskillKV !== undefined) {
-                if (this.CheckIfRecursive(subskillKV)) {
+            if (subskill !== undefined) {
+                if (this.CheckIfRecursive(subskill)) {
                     return true;
                 }
             }
