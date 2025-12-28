@@ -35,7 +35,7 @@ export class MomentCardUIMaker extends ObjUIMaker<Concept> {
     ): Promise<void> {
         const moment = <Moment> mainArray[index];
         itemDiv.classList.add('gl-bordered');
-        itemDiv.classList.add('gl-fit-content');
+        itemDiv.classList.add('gl-fill');
         
         const nameButton = itemDiv.createEl('button', { text: moment.name } );
         HTMLHelper.CreateNewTextDiv(itemDiv, moment.startTime.toDateString());

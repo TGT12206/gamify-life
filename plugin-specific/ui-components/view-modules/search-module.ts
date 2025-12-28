@@ -185,23 +185,19 @@ export class SearchCardUIMaker extends ObjUIMaker<Concept> {
         onSave: () => Promise<void>,
         onRefresh: () => Promise<void>
     ) {
-        itemDiv.classList.add('gl-fit-content');
+        itemDiv.classList.add('gl-fill');
         itemDiv.classList.add('gl-outer-div');
         itemDiv.classList.add('gl-bordered');
-        const topDiv = itemDiv.createDiv('gl-outer-div ' + (this.isVertical ? 'hbox' : 'vbox'));
-        const shiftButtonsDiv = topDiv.createDiv(this.isVertical ? 'hbox' : 'vbox');
-        this.MakeEditButton(view, topDiv, mainArray, index);
 
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'left' : 'up', onRefresh);
-        this.MakeShiftButton(view, shiftButtonsDiv, mainArray, index, this.isVertical ? 'right' : 'down', onRefresh);
-        
-        const bottomDiv = itemDiv.createDiv('gl-outer-div ' + (this.isVertical ? 'hbox' : 'vbox'));
-
+        this.MakeEditButton(view, itemDiv, mainArray, index);
         if (mainArray[index].name === 'Self') {
-            HTMLHelper.CreateNewTextDiv(bottomDiv, 'Name: Self');
+            HTMLHelper.CreateNewTextDiv(itemDiv, 'Name: Self');
         } else {
-            HTMLHelper.CreateNewTextDiv(bottomDiv, 'Name');
-            const nameInput = bottomDiv.createEl('input', { type: 'text', value: mainArray[index].name } );
+            HTMLHelper.CreateNewTextDiv(itemDiv, 'Name');
+            const nameInput = itemDiv.createEl('input', {
+                type: 'text',
+                value: mainArray[index].name
+            });
             view.registerDomEvent(nameInput, 'change', async () => {
                 if (ConceptService.GetConceptByName(this.life, nameInput.value) === undefined) {
                     ConceptService.ChangeConceptName(this.life, index, nameInput.value);
@@ -221,7 +217,7 @@ export class SearchCardUIMaker extends ObjUIMaker<Concept> {
         mainArray: Concept[],
         index: number
     ) {
-        const editButton = div.createEl('button');
+        const editButton = div.createEl('button', { cls: 'gl-fit-content' } );
         setIcon(editButton, 'pencil-line');
         view.registerDomEvent(editButton, 'click', () => {
             view.OpenCorrectConceptEditor(mainArray[index]);
@@ -285,8 +281,10 @@ export class SearchCardGridEditor extends GridEditor<Concept> {
     }
     protected override CreateAddButton(view: ItemView): void {
         const mainArray = this.mainArray;
-        const addButton = this.parentDiv.createEl('button');
+        const anchor = this.parentDiv.createDiv('gl-pos-anchor');
+        const addButton = anchor.createEl('button');
         setIcon(addButton, 'plus');
+        addButton.id = 'gl-grid-add-button';
 
         view.registerDomEvent(addButton, 'click', async () => {
             if (ConceptService.GetConceptByName(this.life, '') !== undefined) {

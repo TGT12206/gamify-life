@@ -13,7 +13,7 @@ export class QuestCardUIMaker extends ObjUIMaker<Concept> {
         onSave: () => Promise<void>,
         onRefresh: () => Promise<void>
     ): Promise<void> {
-        itemDiv.classList.add('gl-fit-content');
+        itemDiv.classList.add('gl-fill');
         itemDiv.classList.add('gl-outer-div');
         itemDiv.classList.add('gl-bordered');
         

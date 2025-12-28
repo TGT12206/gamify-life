@@ -32,17 +32,17 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
         const lockStart = startDiv.createEl('button');
         HTMLHelper.CreateNewTextDiv(startDiv, 'Start Time and Date');
         
-        const startInputDiv = startDiv.createDiv('hbox gl-outer-container');
+        const startInputDiv = startDiv.createDiv('hbox gl-outer-div');
         const startDate = startInputDiv.createEl('input', { type: 'datetime-local', value: HTMLHelper.DateToDateTimeLocalString(moment.startTime) } );
 
         const lockEnd = endDiv.createEl('button');
         HTMLHelper.CreateNewTextDiv(endDiv, 'End Time and Date');
 
-        const endInputDiv = endDiv.createDiv('hbox gl-outer-container');
+        const endInputDiv = endDiv.createDiv('hbox gl-outer-div');
         const endDate = endInputDiv.createEl('input', { type: 'datetime-local', value: HTMLHelper.DateToDateTimeLocalString(moment.endTime) } );
 
         HTMLHelper.CreateNewTextDiv(div, 'Duration');
-        const durationDiv = div.createDiv('hbox gl-outer-container');
+        const durationDiv = div.createDiv('hbox gl-outer-div');
 
         let minuteOffset = (moment.endTime.getTime() - moment.startTime.getTime()) / (1000 * 60);
         let dayOffset = Math.floor(minuteOffset / (60 * 24));
@@ -50,15 +50,15 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
         let hourOffset = Math.floor(minuteOffset / (60));
         minuteOffset -= hourOffset * 60;
 
-        const dayDiv = durationDiv.createDiv('vbox gl-outer-container');
+        const dayDiv = durationDiv.createDiv('vbox gl-outer-div');
         HTMLHelper.CreateNewTextDiv(dayDiv, 'Days');
         const day = dayDiv.createEl('input', { type: 'number', value: dayOffset + '' } );
 
-        const hourDiv = durationDiv.createDiv('vbox gl-outer-container');
+        const hourDiv = durationDiv.createDiv('vbox gl-outer-div');
         HTMLHelper.CreateNewTextDiv(hourDiv, 'Hours');
         const hour = hourDiv.createEl('input', { type: 'number', value: hourOffset + '' } );
 
-        const minuteDiv = durationDiv.createDiv('vbox gl-outer-container');
+        const minuteDiv = durationDiv.createDiv('vbox gl-outer-div');
         HTMLHelper.CreateNewTextDiv(minuteDiv, 'Minutes');
         const minute = minuteDiv.createEl('input', { type: 'number', value: minuteOffset + '' } );
 

@@ -4,14 +4,14 @@ import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Skill } from "plugin-specific/models/skill";
 
-export class SkillCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
+export class SkillCardUIMaker extends ObjUIMaker<Concept> {
     override async MakeUI(
         view: GamifyLifeView,
         itemDiv: HTMLDivElement,
-        mainArray: KeyValue<Concept>[],
+        mainArray: Concept[],
         index: number
     ): Promise<void> {
-        const skill = <Skill> mainArray[index].value;
+        const skill = <Skill> mainArray[index];
         itemDiv.classList.add('gl-bordered');
         itemDiv.classList.add('gl-fit-content');
         
@@ -19,7 +19,7 @@ export class SkillCardUIMaker extends ObjUIMaker<KeyValue<Concept>> {
         view.skillEditorMaker.MakeProgressDisplay(view, itemDiv.createDiv(), skill);
 
         view.registerDomEvent(nameButton, 'click', () => {
-            view.OpenCorrectConceptEditor(mainArray[index].value);
+            view.OpenCorrectConceptEditor(mainArray[index]);
         });
     }
 }

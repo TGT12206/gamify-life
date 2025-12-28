@@ -119,15 +119,19 @@ export default class GamifyLife extends Plugin {
 			} else if (concept.categoryKeys.contains('Skill Unit')) {
 		        this.life.concepts[i] = Object.assign(new SkillUnit(), concept);
 			} else if (concept.categoryKeys.contains('Moment')) {
-		        this.life.concepts[i] = Object.assign(new Moment(), concept);
-                (<Moment> concept).startTime = new Date((<Moment> concept).startTime);
-                (<Moment> concept).endTime = new Date((<Moment> concept).endTime);
+				const moment = Object.assign(new Moment(), concept);
+		        this.life.concepts[i] = moment;
+                moment.startTime = new Date(moment.startTime);
+                moment.endTime = new Date(moment.endTime);
 			} else if (concept.categoryKeys.contains('Observation')) {
 		        this.life.concepts[i] = Object.assign(new Observation(), concept);
 			} else if (concept.categoryKeys.contains('Quest')) {
-		        this.life.concepts[i] = Object.assign(new Quest(), concept);
+				const quest = Object.assign(new Quest(), concept);
+		        this.life.concepts[i] = quest;
+                quest.initialDate = new Date(quest.initialDate);
 			}
         }
+		this.life.concepts.sort((a, b) => { return a.name.toLowerCase() === b.name.toLowerCase() ? 0 : a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1 });
     }
 
 	async savePluginData() {

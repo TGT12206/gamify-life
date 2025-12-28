@@ -7,7 +7,9 @@ export function DisplaySelfModule(view: GamifyLifeView, life: Life, div: HTMLDiv
     div.className = 'gl-scroll gl-fill gl-outer-div vbox';
     const selfOrUndefined = ConceptService.GetConceptByName(life, 'Self');
     if (selfOrUndefined === undefined) {
-        life.concepts.push(new Concept());
+        const self = new Concept();
+        self.name = 'Self';
+        life.concepts.push(self);
     }
     
     const self = selfOrUndefined === undefined ? <Concept> ConceptService.GetConceptByName(life, 'Self') : selfOrUndefined;

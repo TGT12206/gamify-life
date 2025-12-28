@@ -3,6 +3,7 @@ import { Moment } from "plugin-specific/models/moment";
 import { Observation } from "plugin-specific/models/observation";
 import { Skill } from "plugin-specific/models/skill";
 import { KeyService } from "./key";
+import { Concept } from "plugin-specific/models/concept";
 
 export class ConceptService {
     static GetIndexByName(life: Life, name: string) {
@@ -80,6 +81,7 @@ export class ConceptService {
         }
 
         life.concepts[index].name = newName;
+        this.ResortConcepts(life.concepts, index);
 
         for (let i = 0; i < life.concepts.length; i++) {
             const concept = life.concepts[i];
@@ -110,5 +112,29 @@ export class ConceptService {
                 );
             }
         }
+    }
+
+    private static ResortConcepts(concepts: Concept[], changedIndex: number) {
+        const changedConcept = concepts.splice(changedIndex, 1)[0];
+        this.InsertConcept(concepts, changedConcept);
+    }
+
+    static InsertConcept(concepts: Concept[], concept: Concept) {
+        let low = 0;
+        let high = concepts.length;
+        const newName = concept.name.toLowerCase();
+
+        while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            const midName = concepts[mid].name.toLowerCase();
+
+            if (midName < newName) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        concepts.splice(low, 0, concept);
     }
 }

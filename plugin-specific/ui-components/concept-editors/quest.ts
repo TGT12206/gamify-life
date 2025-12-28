@@ -13,6 +13,7 @@ export class QuestEditorUIMaker extends ConceptEditorUIMaker {
     override MakeUI(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
         super.MakeUI(view, div, quest);
         this.MakeTypeEditor(view, div.createDiv(), quest);
+        this.MakeInitialDateEditor(view, div, quest);
     }
     
     MakeCompletionCheckbox(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
@@ -127,6 +128,17 @@ export class QuestEditorUIMaker extends ConceptEditorUIMaker {
 
         view.registerDomEvent(interval, 'change', async () => {
             quest.interval = parseInt(interval.value);
+            await view.onSave();
+        });
+    }
+    
+    protected MakeInitialDateEditor(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
+        div.className = 'vbox gl-outer-div';
+
+        HTMLHelper.CreateNewTextDiv(div, 'Initial Start Date');
+        const startDate = div.createEl('input', { type: 'datetime-local', value: HTMLHelper.DateToDateTimeLocalString(quest.initialDate) } );
+        view.registerDomEvent(startDate, 'change', async () => {
+            quest.initialDate = new Date(startDate.value);
             await view.onSave();
         });
     }
