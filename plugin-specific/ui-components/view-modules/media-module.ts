@@ -28,8 +28,7 @@ class MediaKVUIMaker extends KeyValueUIMaker<string> {
         keyDiv.classList.add('hbox');
         HTMLHelper.CreateNewTextDiv(keyDiv, 'Path in vault');
         const pathInput = keyDiv.createEl('input', { type: 'text', value: mainArray[index].key } );
-        const mediaDiv = keyDiv.createDiv('vbox');
-        const open = keyDiv.createEl('button', { text: 'Open Link' } );
+        const mediaDiv = keyDiv.createDiv('hbox');
         
         const changePath = async (file: TFile) => {
             try {
@@ -40,15 +39,8 @@ class MediaKVUIMaker extends KeyValueUIMaker<string> {
                 pathInput.value = mainArray[index].key;
             }
         }
-        new MediaPathSuggest(pathInput, mediaDiv, async (file: TFile) => { await changePath(file); }, view.app);
-        MediaRenderer.renderMedia(mediaDiv, view.app.vault, mainArray[index].key);
-        view.registerDomEvent(open, 'click', () => {
-            const tFile = view.app.vault.getFileByPath(mainArray[index].key);
-            if (tFile === null) {
-                return new Notice(mainArray[index].key + ' not found');
-            }
-            view.app.workspace.getLeaf('tab').openFile(tFile);
-        });
+        new MediaPathSuggest(pathInput, mediaDiv, async (file: TFile) => { await changePath(file); }, view);
+        MediaRenderer.renderMedia(mediaDiv, view, mainArray[index].key);
     }
     protected override async MakeValueUI(view: ItemView, valueDiv: HTMLDivElement, mainArray: KeyValue<string>[], index: number, onSave: () => Promise<void>, onRefresh: () => Promise<void>): Promise<void> {
         valueDiv.classList.add('hbox');

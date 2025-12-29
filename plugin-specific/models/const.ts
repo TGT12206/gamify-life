@@ -9,8 +9,8 @@ export const BaseCategories: string[] = [
 ] as const;
 
 export const evidenceTypes = [
-    'Media',
     'Concept',
+    'Media',
     'Unknown'
 ] as const;
 

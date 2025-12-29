@@ -39,12 +39,16 @@ function DisplaySearchBar(view: GamifyLifeView, div: HTMLDivElement, context: Se
     const categoryCheckboxMaker = new CategoryCheckboxMaker();
     const categoryPicker = new ListEditor(
         context,
-        filterRow,
+        filterRow.createDiv('gl-outer-div hbox'),
         context.life.categories,
         () => { return new KeyValue<string>('', '') },
         categoryCheckboxMaker,
         doSearch
     );
+
+    HTMLHelper.CreateNewTextDiv(filterRow, 'Reverse order: ');
+    const reverse = filterRow.createEl('input', { type: 'checkbox' } );
+    reverse.checked = false;
 
     categoryCheckboxMaker.isVertical = false;
     categoryPicker.isVertical = false;
@@ -54,6 +58,10 @@ function DisplaySearchBar(view: GamifyLifeView, div: HTMLDivElement, context: Se
 
     view.registerDomEvent(searchTermInput, 'input', async () => {
         context.searchTerm = searchTermInput.value;
+        await doSearch();
+    });
+    view.registerDomEvent(reverse, 'click', async () => {
+        context.isReversed = reverse.checked;
         await doSearch();
     });
 }
@@ -93,6 +101,7 @@ class SearchContext {
     searchResults: number[];
     searchTerm: string;
     categories: string[];
+    isReversed: boolean = false;
     constructor(
         life: Life,
         searchTerm: string = '',
@@ -114,29 +123,39 @@ function SearchForResults(context: SearchContext) {
     const term = context.searchTerm.toLowerCase();
     const hasCategories = context.categories.length > 0;
 
-    for (let i = 0; i < context.life.concepts.length; i++) {
-        const concept = context.life.concepts[i];
-        if (hasCategories) {
-            const matchesCategory = context.categories.every(catKey =>
-                concept.categoryKeys.includes(catKey)
-            );
-            if (!matchesCategory) continue;
+    if (context.isReversed) {
+        for (let i = context.life.concepts.length - 1; i >= 0; i--) {
+            CheckOneResult(context, i, term, hasCategories);
         }
-        if (term !== '') {
-            const inKey = context.life.concepts[i].name.toLowerCase().includes(term);
-            const inName = concept.name.toLowerCase().includes(term);
-            const inDescription = concept.description.toLowerCase().includes(term);
-            const inAliases = concept.aliases.some(alias =>
-                alias.toLowerCase().includes(term)
-            );
-
-            if (!(inKey || inName || inDescription || inAliases)) {
-                continue;
-            }
+    } else {
+        for (let i = 0; i < context.life.concepts.length; i++) {
+            CheckOneResult(context, i, term, hasCategories);
         }
-
-        context.searchResults.push(i);
     }
+}
+
+function CheckOneResult(context: SearchContext, i: number, term: string, hasCategories: boolean) {
+    const concept = context.life.concepts[i];
+    if (hasCategories) {
+        const matchesCategory = context.categories.every(catKey =>
+            concept.categoryKeys.includes(catKey)
+        );
+        if (!matchesCategory) return;
+    }
+    if (term !== '') {
+        const inKey = context.life.concepts[i].name.toLowerCase().includes(term);
+        const inName = concept.name.toLowerCase().includes(term);
+        const inDescription = concept.description.toLowerCase().includes(term);
+        const inAliases = concept.aliases.some(alias =>
+            alias.toLowerCase().includes(term)
+        );
+
+        if (!(inKey || inName || inDescription || inAliases)) {
+            return;
+        }
+    }
+
+    context.searchResults.push(i);
 }
 
 export class SearchCardUIMaker extends ObjUIMaker<Concept> {
@@ -200,8 +219,8 @@ export class SearchCardUIMaker extends ObjUIMaker<Concept> {
             });
             view.registerDomEvent(nameInput, 'change', async () => {
                 if (ConceptService.GetConceptByName(this.life, nameInput.value) === undefined) {
-                    ConceptService.ChangeConceptName(this.life, index, nameInput.value);
-                    await onSave();
+                    ConceptService.ChangeConceptName(this.life, mainArray[index], nameInput.value);
+                    await onRefresh();
                 } else {
                     nameInput.value = mainArray[index].name;
                     new Notice('That name has already been used!');

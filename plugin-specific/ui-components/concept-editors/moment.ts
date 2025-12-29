@@ -65,18 +65,12 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
         setIcon(lockStart, 'lock-open');
         setIcon(lockEnd, 'lock');
 
-        startDate.disabled = startLocked;
-        endDate.disabled = endLocked;
-
         view.registerDomEvent(lockStart, 'click', () => {
             startLocked = !startLocked;
             endLocked = !endLocked;
 
             setIcon(lockStart, startLocked ? 'lock' : 'lock-open');
             setIcon(lockEnd, endLocked ? 'lock' : 'lock-open');
-
-            startDate.disabled = startLocked;
-            endDate.disabled = endLocked;
         });
         view.registerDomEvent(lockEnd, 'click', () => {
             startLocked = !startLocked;
@@ -84,9 +78,6 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
 
             setIcon(lockStart, startLocked ? 'lock' : 'lock-open');
             setIcon(lockEnd, endLocked ? 'lock' : 'lock-open');
-
-            startDate.disabled = startLocked;
-            endDate.disabled = endLocked;
         });
         view.registerDomEvent(startDate, 'change', async () => {
             moment.startTime = new Date(startDate.value);

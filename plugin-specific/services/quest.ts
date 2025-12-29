@@ -75,13 +75,15 @@ export class QuestService {
         return quest.completionDates.some(d => new Date(d).getTime() >= mostRecentStartTime.getTime());
     }
 
-    static ToggleCompletion(quest: Quest): void {
+    static ToggleCompletion(quest: Quest): boolean {
         const now = new Date();
+        const isCompleted = this.IsCompleted(quest);
 
-        if (this.IsCompleted(quest)) {
+        if (isCompleted) {
             quest.completionDates.pop();
         } else {
             quest.completionDates.push(now);
         }
+        return isCompleted;
     }
 }

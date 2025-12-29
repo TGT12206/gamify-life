@@ -46,18 +46,17 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         nameInput.className = 'gl-fill';
 
         view.registerDomEvent(nameInput, 'change', async () => {
-                const newValue = nameInput.value;
+            const newValue = nameInput.value;
 
-                if (ConceptService.GetConceptByName(this.life, newValue) !== undefined) {
-                    nameInput.value = concept.name;
-                    new Notice('That name has already been used!');
-                    return;
-                }
-                
-                concept.name = newValue;
-                await view.onSave();
+            if (ConceptService.GetConceptByName(this.life, newValue) !== undefined) {
+                nameInput.value = concept.name;
+                new Notice('That name has already been used!');
+                return;
             }
-        )
+            
+            ConceptService.ChangeConceptName(this.life, concept, newValue);
+            await view.onSave();
+        })
     }
 
     protected MakeAliasesEditor(

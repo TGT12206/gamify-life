@@ -45,8 +45,7 @@ export class MediaOfDescribableUIMaker extends ObjUIMaker<string> {
         }
 
         const mediaInput = itemDiv.createEl('input', { type: 'text', value: valOnLoad } );
-        const mediaDiv = itemDiv.createDiv('vbox');
-        const open = itemDiv.createEl('button', { text: 'Open Link' } );
+        const mediaDiv = itemDiv.createDiv('hbox');
 
         this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
 
@@ -54,18 +53,10 @@ export class MediaOfDescribableUIMaker extends ObjUIMaker<string> {
             mainArray[index] = mediaKV.key;
             await onSave();
         }
-        new MediaKeySuggest(mediaInput, mediaDiv, this.life, changeMediaKV, view.app);
+        new MediaKeySuggest(mediaInput, mediaDiv, this.life, changeMediaKV, view);
 
         if (nonEmptyPath) {
-            MediaRenderer.renderMedia(mediaDiv, view.app.vault, path);
+            MediaRenderer.renderMedia(mediaDiv, view, path);
         }
-
-        view.registerDomEvent(open, 'click', () => {
-            const tFile = view.app.vault.getFileByPath(mainArray[index]);
-            if (tFile === null) {
-                return new Notice('File not found at ' + mainArray[index]);
-            }
-            view.app.workspace.getLeaf('tab').openFile(tFile);
-        });
     }
 }

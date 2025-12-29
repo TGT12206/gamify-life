@@ -13,7 +13,7 @@ export class SkillCardUIMaker extends ObjUIMaker<Concept> {
     ): Promise<void> {
         const skill = <Skill> mainArray[index];
         itemDiv.classList.add('gl-bordered');
-        itemDiv.classList.add('gl-fit-content');
+        itemDiv.classList.add('gl-fill');
         
         const nameButton = itemDiv.createEl('button', { text: skill.name } );
         view.skillEditorMaker.MakeProgressDisplay(view, itemDiv.createDiv(), skill);

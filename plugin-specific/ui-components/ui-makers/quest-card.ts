@@ -19,7 +19,7 @@ export class QuestCardUIMaker extends ObjUIMaker<Concept> {
         
         const name = itemDiv.createEl('button', { text: mainArray[index].name } );
 
-        this.MakeCompletionCheckbox(view, itemDiv.createDiv(), <Quest> mainArray[index], onRefresh);
+        this.MakeCompletionCheckbox(view, itemDiv.createDiv(), name, <Quest> mainArray[index], onRefresh);
 
         view.registerDomEvent(name, 'click', () => {
             view.OpenCorrectConceptEditor(mainArray[index]);
@@ -29,17 +29,21 @@ export class QuestCardUIMaker extends ObjUIMaker<Concept> {
     private MakeCompletionCheckbox(
         view: GamifyLifeView,
         div: HTMLDivElement,
+        name: HTMLButtonElement,
         quest: Quest,
         onRefresh: () => Promise<void>
     ) {
         const completed = div.createEl('input', { type: 'checkbox' } );
         if (QuestService.IsCompleted(quest)) {
             completed.checked = true;
+            name.id = 'gl-quest-complete';
         } else if (quest.type === 'one-off') {
             completed.checked = false;
+            name.id = 'gl-quest-incomplete';
         }
         view.registerDomEvent(completed, 'click', async () => {
-            QuestService.ToggleCompletion(quest);
+            const isCompleted = QuestService.ToggleCompletion(quest);
+            name.id = 'gl-quest-' + (isCompleted ? '' : 'in') + 'complete';
             await onRefresh();
         });
     }

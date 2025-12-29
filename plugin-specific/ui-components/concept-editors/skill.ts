@@ -3,12 +3,7 @@ import { GamifyLifeView } from "../gamify-life-view";
 import { ConceptEditorUIMaker } from "./concept";
 import { Rank, Skill } from "plugin-specific/models/skill";
 import { HTMLHelper } from "ui-patterns/html-helper";
-import { ListEditor } from "ui-patterns/list-editor";
-import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { ConceptSuggest } from "../suggest/concept-suggest";
-import { ConceptService } from "plugin-specific/services/concept";
-import { KeyValue } from "plugin-specific/models/key-value";
-import { SubskillKeySuggest } from "../suggest/subskill-key-suggest";
 import { SkillService } from "plugin-specific/services/skill";
 import { RankListEditor } from "../list-editors/rank";
 import { SubskillListEditor } from "../list-editors/subskill";
@@ -38,23 +33,16 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
         }
         
         const progressDiv = div.createDiv('hbox gl-outer-div');
-        const progressBar = progressDiv.createDiv('gl-fill gl-bordered');
-        
-        const filledPortion = progressBar.createDiv();
-        const emptyPortion = progressBar.createDiv();
-        
-        filledPortion.id = 'gl-progress-bar-fill';
-        emptyPortion.id = 'gl-progress-bar-empty';
-
-        filledPortion.style.width = (progress.progress * 100) + '%';
+        const progressBar = progressDiv.createDiv('gl-fill gl-bordered gl-progress');
+        progressBar.style.setProperty('--progress', (progress.progress * 100) + '%');
         
         if (progress.next !== null) {
-            filledPortion.textContent = numUnits + '/' + progress.next.threshold;
+            progressBar.textContent = numUnits + '/' + progress.next.threshold;
             HTMLHelper.CreateNewTextDiv(progressDiv, 'Next Rank: ' + progress.next.name);
         } else if (progress.current !== null) {
-            filledPortion.textContent = numUnits + '/' + progress.current.threshold;
+            progressBar.textContent = numUnits + '/' + progress.current.threshold;
         } else {
-            filledPortion.textContent = numUnits + '';
+            progressBar.textContent = numUnits + '';
         }
     }
     

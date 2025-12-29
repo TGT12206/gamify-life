@@ -63,7 +63,7 @@ export class SkillService {
             const range = next.threshold - lowerBound;
             const achievedInRange = totalUnits - lowerBound;
             progress = Math.min(Math.max(achievedInRange / range, 0), 1);
-        } else if (current) {
+        } else {
             progress = 1;
         }
 

@@ -13,7 +13,7 @@ export class QuestEditorUIMaker extends ConceptEditorUIMaker {
     override MakeUI(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
         super.MakeUI(view, div, quest);
         this.MakeTypeEditor(view, div.createDiv(), quest);
-        this.MakeInitialDateEditor(view, div, quest);
+        this.MakeInitialDateEditor(view, div.createDiv(), quest);
     }
     
     MakeCompletionCheckbox(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {

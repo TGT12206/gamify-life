@@ -1,23 +1,27 @@
 import { MediaRenderer } from 'ui-patterns/media-renderer';
-import {App, AbstractInputSuggest, TFile} from 'obsidian';
+import {AbstractInputSuggest, TFile, View} from 'obsidian';
 
 export class MediaPathSuggest extends AbstractInputSuggest<TFile> {
     private get vault() {
         return this.app.vault;
     }
+    private renderMedia: (path: string) => Promise<void>;
 
     constructor(
         public inputEl: HTMLInputElement,
         public mediaDiv: HTMLDivElement,
         public callback: (value: TFile) => void,
-        app: App
+        view: View
     ) {
-        super(app, inputEl);
+        super(view.app, inputEl);
+        this.renderMedia = async (path: string) => {
+            await MediaRenderer.renderMedia(this.mediaDiv, view, path);
+        }
     }
 
     getSuggestions(inputStr: string): TFile[] {
         const allFiles = this.vault.getFiles();
-        for (let i = allFiles.length - 1; i >= 0; i--) {
+        for (let i = 0; i < allFiles.length; i++) {
             const currFile = allFiles[i];
             if (!(
                     (MediaRenderer.isImage(currFile.extension) ||
@@ -40,7 +44,7 @@ export class MediaPathSuggest extends AbstractInputSuggest<TFile> {
     override async selectSuggestion(file: TFile, evt: MouseEvent | KeyboardEvent): Promise<void> {
         try {
             this.callback(file);
-            await MediaRenderer.renderMedia(this.mediaDiv, this.vault, file.path);
+            await this.renderMedia(file.path);
             this.inputEl.value = file.path;
         } finally {
             this.close();

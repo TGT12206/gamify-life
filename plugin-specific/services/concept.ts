@@ -7,13 +7,30 @@ import { Concept } from "plugin-specific/models/concept";
 
 export class ConceptService {
     static GetIndexByName(life: Life, name: string) {
-        for (let i = 0; i < life.concepts.length; i++) {
-            const concept = life.concepts[i];
-            if (concept.name === name) {
-                return i;
+        const concepts = life.concepts;
+        let low = 0;
+        let high = concepts.length;
+
+        while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            const midName = concepts[mid].name;
+
+            if (midName < name) {
+                low = mid + 1;
+            } else {
+                high = mid;
             }
         }
+
+        if (low < concepts.length && concepts[low].name === name) {
+            return low;
+        }
         return -1;
+    }
+
+    static CheckIfNameIsTaken(life: Life, name: string) {
+        const index = this.GetIndexByName(life, name);
+        return index !== -1;
     }
 
     static GetConceptByName(life: Life, name: string) {
@@ -66,21 +83,16 @@ export class ConceptService {
      * Changes the name of the concept
      * @param concept either the key or the index of the concept
      */
-    static ChangeConceptName(life: Life, concept: number | string, newName: string): void {
-        let index: number;
-        let nameToChange: string;
+    static ChangeConceptName(life: Life, concept: Concept, newName: string): void {
+        const oldName = concept.name;
+        const index = this.GetIndexByName(life, concept.name);
         
-        if (typeof concept === 'number') {
-            index = concept;
-            if (index < 0 || index >= life.concepts.length) return;
-            nameToChange = life.concepts[index].name;
-        } else {
-            nameToChange = concept;
-            index = this.GetIndexByName(life, nameToChange);
-            if (index < 0 || index >= life.mediaPaths.length) return;
+        concept.name = newName;
+        
+        if (index === -1) {
+            return;
         }
-
-        life.concepts[index].name = newName;
+        
         this.ResortConcepts(life.concepts, index);
 
         for (let i = 0; i < life.concepts.length; i++) {
@@ -88,26 +100,26 @@ export class ConceptService {
 
             if (concept.categoryKeys.contains('Moment')) {
                 const moment = <Moment> concept;
-                KeyService.ChangeKeyReference(moment.conceptNames, nameToChange, newName);
+                KeyService.ChangeKeyReference(moment.conceptNames, oldName, newName);
                 KeyService.ChangeInnerKeyReference(
                     moment.skillUnitsGained,
-                    (su) => { return su.skillName === nameToChange },
+                    (su) => { return su.skillName === oldName },
                     (i) => { return moment.skillUnitsGained[i].skillName = newName }
                 );
             } else if (concept.categoryKeys.contains('Observation')) {
                 const observation = <Observation> concept;
-                KeyService.ChangeKeyReference(observation.conceptNames, nameToChange, newName);
+                KeyService.ChangeKeyReference(observation.conceptNames, oldName, newName);
                 KeyService.ChangeInnerKeyReference(
                     observation.evidenceList,
-                    (e) => { return e.sourceType === 'Concept' && e.source === nameToChange },
+                    (e) => { return e.sourceType === 'Concept' && e.source === oldName },
                     (i) => { return observation.evidenceList[i].source = newName }
                 );
             } else if (concept.categoryKeys.contains('Skill')) {
                 const skill = <Skill> concept;
-                if (skill.unitName === nameToChange) skill.unitName = newName;
+                if (skill.unitName === oldName) skill.unitName = newName;
                 KeyService.ChangeInnerKeyReference(
                     skill.subskills,
-                    (ss) => { return ss.key === nameToChange },
+                    (ss) => { return ss.name === oldName },
                     (i) => { return skill.subskills[i].name = newName }
                 );
             }

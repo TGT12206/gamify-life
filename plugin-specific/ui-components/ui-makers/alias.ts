@@ -7,6 +7,7 @@ export class AliasUIMaker extends ObjUIMaker<string> {
         itemDiv: HTMLDivElement,
         mainArray: string[],
         index: number,
+        onSave: () => Promise<void>,
         onRefresh: () => Promise<void>
     ): Promise<void> {
         itemDiv.classList.add('gl-fit-content');
@@ -22,7 +23,7 @@ export class AliasUIMaker extends ObjUIMaker<string> {
 
         view.registerDomEvent(aliasInput, 'change', async () => {
             mainArray[index] = aliasInput.value;
-            await view.onSave();
+            await onRefresh();
         });
     }
 }

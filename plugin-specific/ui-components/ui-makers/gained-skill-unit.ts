@@ -2,7 +2,6 @@ import { Moment } from "plugin-specific/models/moment";
 import { GainedSkillUnit, Skill, SkillUnit } from "plugin-specific/models/skill";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GamifyLifeView } from "../gamify-life-view";
-import { KeyService } from "plugin-specific/services/key";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { ConceptService } from "plugin-specific/services/concept";
 import { ConceptSuggest } from "../suggest/concept-suggest";
@@ -55,12 +54,13 @@ export class GainedSkillUnitUIMaker extends ObjUIMaker<GainedSkillUnit> {
         const skillKeyInput = itemDiv.createEl('input', { type: 'text', value: unitGained.skillName } );
 
         const unitGainedInput = numUnitsDiv.createEl('input', { type: 'number', value: unitGained.unitsGained + '' } );
-        HTMLHelper.CreateNewTextDiv(numUnitsDiv, unitType ? unitType.name : 'Hours Spent');
+        const unitName = HTMLHelper.CreateNewTextDiv(numUnitsDiv, unitType ? unitType.name : 'Hours Spent');
 
         this.MakeDeleteButton(view, itemDiv, mainArray, index, onRefresh);
 
         const updateSkillKey = async (skill: Skill) => {
             mainArray[index].skillName = skill.name;
+            unitName.textContent = skill.unitName;
             await onSave();
         };
         new ConceptSuggest(skillKeyInput, view.life, undefined, view.app, updateSkillKey, ['Skill']);

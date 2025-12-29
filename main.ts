@@ -81,7 +81,7 @@ export default class GamifyLife extends Plugin {
 	}
 
 	onunload() {
-		
+		this.savePluginData();
 	}
 
 	async activateView() {

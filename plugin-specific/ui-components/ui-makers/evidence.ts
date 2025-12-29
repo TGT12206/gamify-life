@@ -74,7 +74,7 @@ export class EvidenceUIMaker extends ObjUIMaker<Evidence> {
                 mainArray[index].source = kv.key;
                 await view.onSave();
             };
-            new MediaKeySuggest(sourceInput, div.createDiv('vbox'), view.life, updateSource, view.app);
+            new MediaKeySuggest(sourceInput, div.createDiv('hbox'), view.life, updateSource, view);
             return;
         }
         if (evidence.sourceType === 'Concept') {

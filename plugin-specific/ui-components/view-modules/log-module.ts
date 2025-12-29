@@ -5,15 +5,20 @@ import { Moment } from "plugin-specific/models/moment";
 import { ObjUIMaker } from "ui-patterns/obj-ui-maker";
 import { GridEditor } from "ui-patterns/grid-editor";
 import { HTMLHelper } from "ui-patterns/html-helper";
+import { ConceptService } from "plugin-specific/services/concept";
+import { Notice } from "obsidian";
 
 export function DisplayLogModule(view: GamifyLifeView, life: Life, div: HTMLDivElement) {
     div.className = 'gl-scroll gl-fill gl-outer-div vbox';
     
     const newMoment = new Moment();
-    newMoment.categoryKeys.push('Moment');
-    view.momentEditorMaker.MakeUI(view, div.createDiv(), newMoment);
+    InitializeMoment(newMoment);
+    const editorDiv = div.createDiv();
+    view.momentEditorMaker.MakeUI(view, editorDiv, newMoment);
+    editorDiv.classList.remove('gl-scroll');
 
     const submitButton = div.createEl('button', { text: 'submit' } );
+    submitButton.id = 'gl-submit'
 
     HTMLHelper.CreateNewTextDiv(div, 'Past moments:');
 
@@ -21,9 +26,29 @@ export function DisplayLogModule(view: GamifyLifeView, life: Life, div: HTMLDivE
     listEditor.Render(view);
 
     view.registerDomEvent(submitButton, 'click', async () => {
+        const nameIsTaken = ConceptService.CheckIfNameIsTaken(life, newMoment.name);
+        if (nameIsTaken) {
+            new Notice('That name is already taken!');
+            return;
+        }
+        
         life.concepts.push(newMoment);
+        await view.onSave();
+        div.empty();
         DisplayLogModule(view, life, div);
     });
+}
+
+function InitializeMoment(moment: Moment) {
+    moment.startTime.setHours(0, 0, 0, 0);
+    moment.endTime.setHours(23, 59, 0, 0);
+    
+    const date = moment.startTime;
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    moment.name = year + '/' + month + '/' + day;
 }
 
 export class MomentCardUIMaker extends ObjUIMaker<Concept> {

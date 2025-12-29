@@ -1,4 +1,4 @@
-import {App, AbstractInputSuggest, TFile, Notice} from 'obsidian';
+import {App, AbstractInputSuggest, TFile, Notice, View} from 'obsidian';
 import { KeyValue } from 'plugin-specific/models/key-value';
 import { Life } from 'plugin-specific/models/life';
 import { MediaRenderer } from 'ui-patterns/media-renderer';
@@ -7,21 +7,25 @@ export class MediaKeySuggest extends AbstractInputSuggest<KeyValue<string>> {
     private get vault() {
         return this.app.vault;
     }
+    private renderMedia: (path: string) => Promise<void>;
 
     constructor(
         public inputEl: HTMLInputElement,
         public mediaDiv: HTMLDivElement,
         public life: Life,
         public callback: (mediaKV: KeyValue<string>) => Promise<void>,
-        app: App
+        view: View
     ) {
-        super(app, inputEl);
+        super(view.app, inputEl);
+        this.renderMedia = async (path: string) => {
+            await MediaRenderer.renderMedia(this.mediaDiv, view, path);
+        }
     }
 
     getSuggestions(inputStr: string): KeyValue<string>[] {
         const pluginMediaFiles = [];
         const pluginMediaPathKVs = this.life.mediaPaths;
-        for (let i = pluginMediaPathKVs.length - 1; i >= 0; i--) {
+        for (let i = 0; i < pluginMediaPathKVs.length; i++) {
             const currFileKV = pluginMediaPathKVs[i];
             const currFilePath = currFileKV.key;
             const currFileAlias = currFileKV.value;
@@ -40,7 +44,7 @@ export class MediaKeySuggest extends AbstractInputSuggest<KeyValue<string>> {
     override async selectSuggestion(mediaKV: KeyValue<string>, evt: MouseEvent | KeyboardEvent): Promise<void> {
         try {
             await this.callback(mediaKV);
-            await MediaRenderer.renderMedia(this.mediaDiv, this.vault, mediaKV.key);
+            await this.renderMedia(mediaKV.key);
             this.inputEl.value = mediaKV.value;
         } finally {
             this.close();

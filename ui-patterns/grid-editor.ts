@@ -19,7 +19,7 @@ export class GridEditor<T> extends ListEditor<T> {
     }
 
     public async Render(view: ItemView) {
-        const classNames = (this.isVertical ? 'vbox' : 'hbox') + ' gl-fill gl-outer-div ' + this.extraClasses;
+        const classNames = (this.isVertical ? 'vbox' : 'hbox') + ' gl-grid gl-outer-div ' + this.extraClasses;
 
         this.parentDiv.empty();
         this.parentDiv.className = classNames;

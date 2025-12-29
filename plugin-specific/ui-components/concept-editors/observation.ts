@@ -9,7 +9,32 @@ export class ObservationEditorUIMaker extends ConceptEditorUIMaker {
     override MakeUI(view: GamifyLifeView, div: HTMLDivElement, observation: Observation) {
         super.MakeUI(view, div, observation);
         this.MakeConceptKeysEditor(view, div.createDiv(), observation);
+        this.MakeConfidenceEditor(view, div.createDiv(), observation);
         this.MakeEvidenceListEditor(view, div.createDiv(), observation);
+    }
+
+
+    protected MakeConfidenceEditor(
+        view: GamifyLifeView,
+        div: HTMLDivElement,
+        observation: Observation
+    ) {
+        div.empty();
+        div.addClass('hbox');
+
+        HTMLHelper.CreateNewTextDiv(div, 'Level of confidence');
+
+        const input = div.createEl('input', {
+            type: 'number',
+            value: observation.confidenceLevel + ''
+        });
+        HTMLHelper.CreateNewTextDiv(div, '%');
+
+        view.registerDomEvent(input, 'change', async () => {
+            const newValue = parseFloat(input.value);
+            observation.confidenceLevel = newValue;
+            await view.onSave();
+        })
     }
 
     protected MakeConceptKeysEditor(view: GamifyLifeView, div: HTMLDivElement, observation: Observation) {

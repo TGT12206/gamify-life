@@ -20,7 +20,7 @@ export class ConceptSuggest extends AbstractInputSuggest<Concept> {
     getSuggestions(inputStr: string): Concept[] {
         const pluginMediaFiles = [];
         const concepts = this.life.concepts;
-        for (let i = concepts.length - 1; i >= 0; i--) {
+        for (let i = 0; i < concepts.length; i++) {
             const currConcept = concepts[i];
             
             if (!this.CheckCategories(currConcept)) {
@@ -34,7 +34,11 @@ export class ConceptSuggest extends AbstractInputSuggest<Concept> {
             const currName = currConcept.name;
             const description = currConcept.description;
 
-            const currConceptString = currName + '\n\t' + description;
+            let currConceptString = currName + '\n';
+            for (let j = 0; j < currConcept.aliases.length; j++) {
+                currConceptString += currConcept.aliases[j] + '\n';
+            }
+            currConceptString += description;
             if (currConceptString.toLowerCase().contains(inputStr.toLowerCase())) {
                 pluginMediaFiles.push(currConcept);
             }

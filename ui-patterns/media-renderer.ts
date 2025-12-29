@@ -1,4 +1,4 @@
-import { Notice, Vault } from "obsidian";
+import { Notice, setIcon, Vault, View } from "obsidian";
 
 export class MediaRenderer {
     
@@ -49,7 +49,8 @@ export class MediaRenderer {
         ]
     };
 
-    static async renderMedia(mediaDiv: HTMLDivElement, vault: Vault, path: string) {
+    static async renderMedia(mediaDiv: HTMLDivElement, view: View, path: string) {
+        const vault = view.app.vault;
         mediaDiv.empty();
         const src = await this.getSrc(mediaDiv, vault, path);
         
@@ -72,6 +73,17 @@ export class MediaRenderer {
         }
         mediaEl.className = 'gl-media';
         mediaEl.src = src;
+
+        const open = mediaDiv.createEl('button', { cls: 'gl-fit-content' } );
+        setIcon(open, 'external-link');
+
+        view.registerDomEvent(open, 'click', () => {
+            const tFile = view.app.vault.getFileByPath(path);
+            if (tFile === null) {
+                return new Notice(path + ' not found');
+            }
+            view.app.workspace.getLeaf('tab').openFile(tFile);
+        });
     }
 
     static async getSrc(mediaDiv: HTMLDivElement, vault: Vault, path: string) {

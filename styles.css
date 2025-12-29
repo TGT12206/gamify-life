@@ -68,6 +68,24 @@ button:hover {
 	height: 100%;
 }
 
+.gl-grid {
+	width: 100%;
+}
+
+.gl-grid-card {
+	width: 100%;
+	height: 100%;
+	text-wrap-mode: wrap;
+}
+
+.gl-progress {
+	background-image: linear-gradient(
+		to right,
+		var(--color-accent) var(--progress),
+		transparent var(--progress)
+  	);
+}
+
 .gl-main :is(div, input[type=text], textarea, button).gl-fit-content {
 	width: fit-content;
 	height: fit-content;
@@ -87,12 +105,13 @@ button:hover {
 
 .gl-media {
 	object-fit: contain;
-	width: 2.5vw;
-	height: 2.5vw;
+	width: 7.5vw;
+	height: 7.5vw;
 }
 
 .gl-scroll {
 	overflow: scroll;
+	scrollbar-width: none;
 }
 
 #gl-grid-add-button {
@@ -110,4 +129,16 @@ button:hover {
 #gl-progress-bar-empty {
 	background-color: transparent;
 	height: 100%;
+}
+
+#gl-submit {
+	background-color: var(--color-accent);
+}
+
+#gl-quest-complete {
+	text-decoration: line-through;
+}
+
+#gl-quest-incomplete {
+	text-decoration: unset;
 }
