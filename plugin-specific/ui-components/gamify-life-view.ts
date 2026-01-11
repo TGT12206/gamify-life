@@ -1,34 +1,36 @@
 import { ItemView, setIcon, WorkspaceLeaf } from 'obsidian';
 import { Life } from 'plugin-specific/models/life';
-import { DisplayMediaModule } from './view-modules/media-module';
-import { DisplayCategoryModule } from './view-modules/category-module';
 import { Concept } from 'plugin-specific/models/concept';
-import { DisplaySearchModule } from './view-modules/search-module';
-import { ConceptEditorUIMaker } from './concept-editors/concept';
-import { SelfEditorUIMaker } from './concept-editors/self';
-import { PersonEditorUIMaker } from './concept-editors/person';
-import { SkillEditorUIMaker } from './concept-editors/skill';
-import { RankEditorUIMaker } from './concept-editors/rank';
-import { SkillUnitEditorUIMaker } from './concept-editors/skill-unit';
-import { MomentEditorUIMaker } from './concept-editors/moment';
-import { ObservationEditorUIMaker } from './concept-editors/observation';
-import { QuestEditorUIMaker } from './concept-editors/quest';
-import { DescribableEditorUIMaker } from './concept-editors/describable';
-import { BaseCategories } from 'plugin-specific/models/const';
+import { SelfLoader } from './concept-editors/self';
+import { PersonLoader } from './concept-editors/person';
+import { SkillLoader } from './concept-editors/skill';
+import { RankLoader } from './concept-editors/rank';
+import { UnitLoader } from './concept-editors/unit';
+import { QuestLoader } from './concept-editors/quest';
 import { Moment } from 'plugin-specific/models/moment';
-import { Observation } from 'plugin-specific/models/observation';
 import { Quest } from 'plugin-specific/models/quest';
-import { Rank, Skill, SkillUnit } from 'plugin-specific/models/skill';
-import { DisplaySelfModule } from './view-modules/self-module';
-import { DisplayLogModule } from './view-modules/log-module';
-import { DisplayQuestModule } from './view-modules/quest-module';
-import { ConceptService } from 'plugin-specific/services/concept';
+import { Rank, Skill, Unit } from 'plugin-specific/models/skill';
+import { ConceptLoader } from './concept-editors/concept';
+import { MomentLoader } from './concept-editors/moment';
+import { ClaimLoader } from './concept-editors/claim';
+import { playerKey } from 'plugin-specific/models/const';
+import { Claim } from 'plugin-specific/models/claim';
+import { MediaRenderer } from 'ui-patterns/media-renderer';
+import { ItemOrSpaceLoader } from './concept-editors/item-or-space';
+import { ItemOrSpace } from 'plugin-specific/models/item-or-space';
+import { SearchModuleLoader } from './module-page-loaders/search-module';
+import { CategoryModuleLoader } from './module-page-loaders/category';
+import { LogModuleLoader } from './module-page-loaders/log';
+import { QuestModuleLoader } from './module-page-loaders/quest-module';
+import { SelfModuleLoader } from './module-page-loaders/self-module';
+import { PageInstance } from './page';
 
 export const VIEW_TYPE_GAMIFY_LIFE = 'gamify-life';
 const VIEW_DISPLAY_NAME = 'Gamify Life';
 
 interface GamifyLifeViewContext {
     life: Life;
+    mediaRenderer: MediaRenderer;
     onSave: () => Promise<void>;
 }
 
@@ -36,16 +38,27 @@ export class GamifyLifeView extends ItemView {
     mainDiv: HTMLDivElement;
     moduleDiv: HTMLDivElement;
 
-    describableEditorMaker: DescribableEditorUIMaker;
-    conceptEditorMaker: ConceptEditorUIMaker;
-    personEditorMaker: PersonEditorUIMaker;
-    selfEditorMaker: SelfEditorUIMaker;
-    skillEditorMaker: SkillEditorUIMaker;
-    rankEditorMaker: RankEditorUIMaker;
-    skillUnitEditorMaker: SkillUnitEditorUIMaker;
-    momentEditorMaker: MomentEditorUIMaker;
-    observationEditorMaker: ObservationEditorUIMaker;
-    questEditorMaker: QuestEditorUIMaker;
+    mediaRenderer: MediaRenderer;
+    
+    pageIndex: number;
+    pageHistory: PageInstance[];
+
+    selfModule: SelfModuleLoader;
+    questModule: QuestModuleLoader;
+    logModule: LogModuleLoader;
+    categoryModule: CategoryModuleLoader;
+    searchModule: SearchModuleLoader;
+
+    conceptLoader: ConceptLoader;
+    personLoader: PersonLoader;
+    spaceLoader: ItemOrSpaceLoader;
+    selfLoader: SelfLoader;
+    skillLoader: SkillLoader;
+    rankLoader: RankLoader;
+    unitLoader: UnitLoader;
+    momentLoader: MomentLoader;
+    claimLoader: ClaimLoader;
+    questLoader: QuestLoader;
 
     life: Life;
     onSave: () => Promise<void>;
@@ -53,18 +66,28 @@ export class GamifyLifeView extends ItemView {
     constructor(leaf: WorkspaceLeaf, context: GamifyLifeViewContext) {
         super(leaf);
         this.life = context.life;
+        this.mediaRenderer = context.mediaRenderer;
         this.onSave = context.onSave;
         
-        this.describableEditorMaker = new DescribableEditorUIMaker(this.life);
-        this.conceptEditorMaker = new ConceptEditorUIMaker(this.life);
-        this.personEditorMaker = new PersonEditorUIMaker(this.life);
-        this.selfEditorMaker = new SelfEditorUIMaker(this.life);
-        this.skillEditorMaker = new SkillEditorUIMaker(this.life);
-        this.rankEditorMaker = new RankEditorUIMaker(this.life);
-        this.skillUnitEditorMaker = new SkillUnitEditorUIMaker(this.life);
-        this.momentEditorMaker = new MomentEditorUIMaker(this.life);
-        this.observationEditorMaker = new ObservationEditorUIMaker(this.life);
-        this.questEditorMaker = new QuestEditorUIMaker(this.life);
+        this.pageIndex = 0;
+        this.pageHistory = [];
+
+        this.selfModule = new SelfModuleLoader();
+        this.questModule = new QuestModuleLoader();
+        this.logModule = new LogModuleLoader();
+        this.categoryModule = new CategoryModuleLoader();
+        this.searchModule = new SearchModuleLoader();
+
+        this.conceptLoader = new ConceptLoader(this.life);
+        this.personLoader = new PersonLoader(this.life);
+        this.spaceLoader = new ItemOrSpaceLoader(this.life);
+        this.selfLoader = new SelfLoader(this.life);
+        this.skillLoader = new SkillLoader(this.life);
+        this.rankLoader = new RankLoader(this.life);
+        this.unitLoader = new UnitLoader(this.life);
+        this.momentLoader = new MomentLoader(this.life);
+        this.claimLoader = new ClaimLoader(this.life);
+        this.questLoader = new QuestLoader(this.life);
     }
 
     getViewType() {
@@ -87,14 +110,30 @@ export class GamifyLifeView extends ItemView {
 
         const layout = mainDiv.createDiv('gl-main gl-outer-div gl-bordered hbox');
         const sidebar = layout.createDiv('gl-tab-bar gl-outer-div gl-bordered vbox');
-        this.moduleDiv = layout.createDiv('gl-fill gl-scroll');
-        const contentArea = this.moduleDiv;
+        const navbar = sidebar.createDiv('gl-bordered gl-fit-content hbox');
+        const contentArea = layout.createDiv('gl-fill vbox');
+        this.moduleDiv = contentArea;
 
-        const setActiveModule = (button: HTMLButtonElement, renderFn: () => void) => {
+        const backButton = navbar.createEl('button', { cls: 'gl-fit-content' } );
+        const forwardsButton = navbar.createEl('button', { cls: 'gl-fit-content' } );
+
+        setIcon(backButton, 'arrow-big-left');
+        setIcon(forwardsButton, 'arrow-big-right');
+
+        this.registerDomEvent(backButton, 'click', () => {
+            this.TraverseHistory('Backwards');
+        });
+        this.registerDomEvent(forwardsButton, 'click', () => {
+            this.TraverseHistory('Forwards');
+        });
+
+        const setActiveModule = (button: HTMLButtonElement, loadFn: () => void) => {
             sidebar.querySelectorAll('button').forEach(btn => btn.id = 'gl-unselected-tab');
             button.id = 'gl-selected-tab';
-            contentArea.empty();
-            renderFn();
+            this.moduleDiv.empty();
+            this.pageHistory = [];
+            this.pageIndex = 0;
+            loadFn();
         };
 
         const selfBtn = sidebar.createEl('button');
@@ -102,7 +141,8 @@ export class GamifyLifeView extends ItemView {
         selfBtn.title = 'Player Data';
         this.registerDomEvent(selfBtn, 'click', () => {
             setActiveModule(selfBtn, () => {
-                DisplaySelfModule(this, this.life, contentArea);
+                this.pageHistory.push(new PageInstance(null, this.selfModule));
+                this.selfModule.Load(this, this.moduleDiv);
             })
         });
 
@@ -111,7 +151,8 @@ export class GamifyLifeView extends ItemView {
         questBtn.title = 'Quests';
         this.registerDomEvent(questBtn, 'click', () => {
             setActiveModule(questBtn, () => {
-                DisplayQuestModule(this, this.life, contentArea);
+                this.pageHistory.push(new PageInstance(null, this.questModule));
+                this.questModule.Load(this, this.moduleDiv);
             })
         });
 
@@ -120,16 +161,8 @@ export class GamifyLifeView extends ItemView {
         logBtn.title = 'Log';
         this.registerDomEvent(logBtn, 'click', () => {
             setActiveModule(logBtn, () => {
-                DisplayLogModule(this, this.life, contentArea);
-            })
-        });
-
-        const mediaBtn = sidebar.createEl('button');
-        setIcon(mediaBtn, 'image');
-        mediaBtn.title = 'Gallery';
-        this.registerDomEvent(mediaBtn, 'click', () => {
-            setActiveModule(mediaBtn, () => {
-                DisplayMediaModule(this, this.life, contentArea);
+                this.pageHistory.push(new PageInstance(null, this.logModule));
+                this.logModule.Load(this, this.moduleDiv);
             })
         });
 
@@ -138,7 +171,8 @@ export class GamifyLifeView extends ItemView {
         categoryBtn.title = 'Categories';
         this.registerDomEvent(categoryBtn, 'click', () => {
             setActiveModule(categoryBtn, () => {
-                DisplayCategoryModule(this, this.life, contentArea);
+                this.pageHistory.push(new PageInstance(null, this.categoryModule));
+                this.categoryModule.Load(this, this.moduleDiv);
             })
         });
 
@@ -147,62 +181,96 @@ export class GamifyLifeView extends ItemView {
         searchBtn.title = 'Search';
         this.registerDomEvent(searchBtn, 'click', () => {
             setActiveModule(searchBtn, () => {
-                DisplaySearchModule(this, this.life, contentArea);
+                this.pageHistory.push(new PageInstance(null, this.searchModule));
+                this.searchModule.Load(this, this.moduleDiv);
             })
         });
 
         selfBtn.click();
     }
 
-    OpenCorrectConceptEditor(concept: Concept) {
+    TraverseHistory(direction: 'Backwards' | 'Forwards') {
+        if (direction === 'Backwards') {
+            if (this.pageIndex === 0) return;
+            this.pageIndex--;
+            const page = this.pageHistory[this.pageIndex];
+            this.moduleDiv.empty();
+            page.pageLoader.Load(this, this.moduleDiv, page.pageData);
+        }
+        if (direction === 'Forwards') {
+            if (this.pageIndex >= this.pageHistory.length - 1) return;
+            this.pageIndex++;
+            const page = this.pageHistory[this.pageIndex];
+            this.moduleDiv.empty();
+            page.pageLoader.Load(this, this.moduleDiv, page.pageData);
+        }
+    }
+
+    OpenCorrectConceptLoader(concept: Concept) {
         const div = this.moduleDiv;
         const concepts = this.life.concepts;
-        const index = ConceptService.GetIndexByName(this.life, concept.name);
-        if (concept.name === 'Self') {
-            return this.selfEditorMaker.MakeUI(this, div, concept);
+        const key = this.life.FindKey(concept);
+        
+        this.pageIndex++;
+        if (this.pageIndex < this.pageHistory.length) this.pageHistory.splice(this.pageIndex);
+
+        if (key === playerKey) {
+            this.pageHistory.push(new PageInstance(concept, this.selfLoader));
+            return this.selfLoader.Load(this, div, concept);
         }
         let newConcept;
-        for (let i = 0; i < BaseCategories.length; i++) {
-            const bc = BaseCategories[i];
-            if (!concept.categoryKeys.contains(bc)) {
-                continue;
-            }
-            switch(bc) {
-                case 'Person':
-                    return this.personEditorMaker.MakeUI(this, div, concept);
-                case 'Skill':
-                    newConcept = new Skill();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.skillEditorMaker.MakeUI(this, div, newConcept);
-                case 'Skill Rank':
-                    newConcept = new Rank();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.rankEditorMaker.MakeUI(this, div, newConcept);
-                case 'Skill Unit':
-                    newConcept = new SkillUnit();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.skillUnitEditorMaker.MakeUI(this, div, newConcept);
-                case 'Moment':
-                    newConcept = new Moment();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.momentEditorMaker.MakeUI(this, div, <Moment> newConcept);
-                case 'Observation':
-                    newConcept = new Observation();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.observationEditorMaker.MakeUI(this, div, <Observation> newConcept);
-                case 'Quest':
-                    newConcept = new Quest();
-                    Object.assign(newConcept, concept);
-                    concepts[index] = newConcept;
-                    return this.questEditorMaker.MakeUI(this, div, <Quest> newConcept);
-            }
+        const bc = concept.baseCategory;
+        switch(bc) {
+            case 'Person':
+                this.pageHistory.push(new PageInstance(concept, this.personLoader));
+                return this.personLoader.Load(this, div, concept);
+            case 'Item or Space':
+                newConcept = new ItemOrSpace();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.spaceLoader));
+                return this.spaceLoader.Load(this, div, newConcept);
+            case 'Skill':
+                newConcept = new Skill();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.skillLoader));
+                return this.skillLoader.Load(this, div, newConcept);
+            case 'Rank':
+                newConcept = new Rank();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.rankLoader));
+                return this.rankLoader.Load(this, div, newConcept);
+            case 'Unit':
+                newConcept = new Unit();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.unitLoader));
+                return this.unitLoader.Load(this, div, newConcept);
+            case 'Moment':
+                newConcept = new Moment();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.momentLoader));
+                return this.momentLoader.Load(this, div, <Moment> newConcept);
+            case 'Claim':
+                newConcept = new Claim();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.claimLoader));
+                return this.claimLoader.Load(this, div, <Claim> newConcept);
+            case 'Quest':
+                newConcept = new Quest();
+                Object.assign(newConcept, concept);
+                concepts.set(<string> key, newConcept);
+                this.pageHistory.push(new PageInstance(newConcept, this.questLoader));
+                return this.questLoader.Load(this, div, <Quest> newConcept);
+            case undefined:
+            default:
+                this.pageHistory.push(new PageInstance(concept, this.conceptLoader));
+                return this.conceptLoader.Load(this, div, concept);
         }
-        return this.conceptEditorMaker.MakeUI(this, div, concept);
     }
 }
 

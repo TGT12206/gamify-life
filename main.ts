@@ -1,36 +1,29 @@
-import { Notice, Plugin } from 'obsidian';
+import { Notice, Plugin, TAbstractFile, TFile, TFolder } from 'obsidian';
 import { Concept } from 'plugin-specific/models/concept';
-import { BaseCategories } from 'plugin-specific/models/const';
-import { KeyValue } from 'plugin-specific/models/key-value';
+import { baseCategories } from 'plugin-specific/models/const';
 import { Life } from 'plugin-specific/models/life';
 import { Moment } from 'plugin-specific/models/moment';
-import { Observation } from 'plugin-specific/models/observation';
+import { Claim } from 'plugin-specific/models/claim';
 import { Quest } from 'plugin-specific/models/quest';
-import { Rank, Skill, SkillUnit } from 'plugin-specific/models/skill';
+import { Rank, Skill, Unit } from 'plugin-specific/models/skill';
 import { GamifyLifeView, VIEW_TYPE_GAMIFY_LIFE } from 'plugin-specific/ui-components/gamify-life-view';
-
-function CreateDefaultLife() {
-	const defaultLife = new Life();
-	BaseCategories.forEach((cat: string) => {
-		defaultLife.categories.push(new KeyValue(cat, cat));
-	});
-	const self = new Concept();
-	self.name = 'Self';
-	defaultLife.concepts.push(self);
-	return defaultLife;
-}
+import { MediaRenderer } from 'ui-patterns/media-renderer';
+import { ItemOrSpace } from 'plugin-specific/models/item-or-space';
 
 export default class GamifyLife extends Plugin {
 
 	public life: Life;
+	public mediaRenderer: MediaRenderer;
 
 	async onload() {
 		await this.loadPluginData();
+		this.mediaRenderer = new MediaRenderer();
 		
 		this.registerView(
             VIEW_TYPE_GAMIFY_LIFE,
             (leaf) => new GamifyLifeView(leaf, {
 				life: this.life,
+				mediaRenderer: this.mediaRenderer,
         		onSave: this.savePluginData.bind(this)
 			})
         );
@@ -46,38 +39,31 @@ export default class GamifyLife extends Plugin {
             }
         });
 
-		// this.registerEvent(this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
-		// 	if (file instanceof TFolder) {
-		// 		return;
-		// 	}
-		// 	const tFile = <TFile> file;
-		// 	const ext = tFile.extension;
-		// 	if (ext === MOMENT_EXTENSION) {
+		this.registerEvent(this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
+			if (file instanceof TFolder) {
+				return;
+			}
+			const tFile = <TFile> file;
+			const ext = tFile.extension;
+			if (MediaRenderer.isValid(ext)) {
+				this.life.ChangeMediaPath(oldPath, file.path);
+				this.mediaRenderer.changePath(oldPath, file.path);
+			}
+			await this.savePluginData()
+		}));
 
-		// 	} else if (ext === SKILL_EXTENSION) {
-		// 		await SkillHandler.HandleSkillRename(this.app, oldPath, file.path);
-		// 		await MomentHandler.HandleSkillRename(this.app, oldPath, file.path);
-		// 	} else if (MediaPathModal.validFileTypes.contains(ext)) {
-		// 		await SkillHandler.HandleMediaRename(this.app, oldPath, file.path);
-		// 		await MomentHandler.HandleMediaRename(this.app, oldPath, file.path);
-		// 	}
-		// }));
-		// this.registerEvent(this.app.vault.on('delete', async (file: TAbstractFile) => {
-		// 	if (file instanceof TFolder) {
-		// 		return;
-		// 	}
-		// 	const tFile = <TFile> file;
-		// 	const ext = tFile.extension;
-		// 	if (ext === MOMENT_EXTENSION) {
-
-		// 	} else if (ext === SKILL_EXTENSION) {
-		// 		await SkillHandler.HandleSkillDelete(this.app, file.path);
-		// 		await MomentHandler.HandleSkillDelete(this.app, file.path);
-		// 	} else if (MediaPathModal.validFileTypes.contains(ext)) {
-		// 		await SkillHandler.HandleMediaDelete(this.app, file.path);
-		// 		await MomentHandler.HandleMediaDelete(this.app, file.path);
-		// 	}
-		// }));
+		this.registerEvent(this.app.vault.on('delete', async (file: TAbstractFile) => {
+			if (file instanceof TFolder) {
+				return;
+			}
+			const tFile = <TFile> file;
+			const ext = tFile.extension;
+			if (MediaRenderer.isValid(ext)) {
+				this.life.DeleteMediaPath(file.path);
+				this.mediaRenderer.forgetPath(file.path);
+			}
+			await this.savePluginData()
+		}));
 	}
 
 	onunload() {
@@ -104,37 +90,86 @@ export default class GamifyLife extends Plugin {
 		workspace.revealLeaf(leaf);
 	}
 
+	CreateDefaultLife() {
+		const defaultLife = new Life();
+		defaultLife.categories = new Map();
+		defaultLife.concepts = new Map();
+		baseCategories.forEach((cat: string) => {
+			defaultLife.categories.set(cat, cat);
+		});
+		const self = new Concept();
+		defaultLife.concepts.set('Self', self);
+		return defaultLife;
+	}
+
 	async loadPluginData() {
         const loadedData = await this.loadData();
 		this.life = Object.assign(new Life(), loadedData);
-		if (this.life.categories.length === 0) {
-			this.life = CreateDefaultLife();
+		if (this.life.categories === undefined || this.life.concepts === undefined) {
+			this.life = this.CreateDefaultLife();
+		} else {
+			this.life.categories = new Map<string, string>(loadedData.categories);
+			this.life.concepts = new Map<string, Concept>(loadedData.concepts);
 		}
-		for (let i = 0; i < this.life.concepts.length; i++) {
-			const concept = this.life.concepts[i];
-			if (concept.categoryKeys.contains('Skill')) {
-		        this.life.concepts[i] = Object.assign(new Skill(), concept);
-			} else if (concept.categoryKeys.contains('Skill Rank')) {
-		        this.life.concepts[i] = Object.assign(new Rank(), concept);
-			} else if (concept.categoryKeys.contains('Skill Unit')) {
-		        this.life.concepts[i] = Object.assign(new SkillUnit(), concept);
-			} else if (concept.categoryKeys.contains('Moment')) {
-				const moment = Object.assign(new Moment(), concept);
-		        this.life.concepts[i] = moment;
-                moment.startTime = new Date(moment.startTime);
-                moment.endTime = new Date(moment.endTime);
-			} else if (concept.categoryKeys.contains('Observation')) {
-		        this.life.concepts[i] = Object.assign(new Observation(), concept);
-			} else if (concept.categoryKeys.contains('Quest')) {
-				const quest = Object.assign(new Quest(), concept);
-		        this.life.concepts[i] = quest;
-                quest.initialDate = new Date(quest.initialDate);
-			}
-        }
-		this.life.concepts.sort((a, b) => { return a.name.toLowerCase() === b.name.toLowerCase() ? 0 : a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1 });
+		this.rehydrateConcepts();
     }
 
+	private getBaseTypeOfConceptObject(concept: Concept) {
+		for (let i = 0; i < baseCategories.length; i++) {
+			const bc = baseCategories[i];
+			if (concept.categoryKeys.contains(bc)) {
+				return bc;
+			}
+		}
+		return undefined;
+	}
+
+	private rehydrateConcepts() {
+		const conceptKeys = [...this.life.concepts.keys()];
+		for (let i = 0; i < conceptKeys.length; i++) {
+			const key = conceptKeys[i];
+			const concept = <Concept> this.life.concepts.get(key);
+			const bc = this.getBaseTypeOfConceptObject(concept);
+			switch (bc) {
+				case 'Person':
+			        this.life.concepts.set(key, Object.assign(new ItemOrSpace(), concept));
+					break;
+				case 'Skill':
+			        this.life.concepts.set(key, Object.assign(new Skill(), concept));
+					break;
+				case 'Rank':
+			        this.life.concepts.set(key, Object.assign(new Rank(), concept));
+					break;
+				case 'Unit':
+			        this.life.concepts.set(key, Object.assign(new Unit(), concept));
+					break;
+				case 'Moment':
+					const moment = Object.assign(new Moment(), concept);
+					this.life.concepts.set(key, moment);
+					moment.startTime = new Date(moment.startTime);
+					moment.endTime = new Date(moment.endTime);
+					break;
+				case 'Claim':
+			        this.life.concepts.set(key, Object.assign(new Claim(), concept));
+					break;
+				case 'Quest':
+					const quest = Object.assign(new Quest(), concept);
+					this.life.concepts.set(key, quest);
+					quest.initialDate = new Date(quest.initialDate);
+					break;
+				default:
+					this.life.concepts.set(key, Object.assign(new Concept(), concept));
+					break;
+			}
+        }
+	}
+
 	async savePluginData() {
-        await this.saveData(this.life);
+		const lifeDTO = {
+			categories: Array.from(this.life.categories.entries()),
+			concepts: Array.from(this.life.concepts.entries())
+		};
+
+        await this.saveData(lifeDTO);
     }
 }

@@ -1,18 +1,24 @@
-import { Concept } from "plugin-specific/models/concept";
 import { GamifyLifeView } from "../gamify-life-view";
-import { ConceptEditorUIMaker } from "./concept";
-import { Rank, Skill } from "plugin-specific/models/skill";
+import { ConceptLoader } from "./concept";
+import { Skill, Unit } from "plugin-specific/models/skill";
 import { HTMLHelper } from "ui-patterns/html-helper";
-import { ConceptSuggest } from "../suggest/concept-suggest";
-import { SkillService } from "plugin-specific/services/skill";
-import { RankListEditor } from "../list-editors/rank";
-import { SubskillListEditor } from "../list-editors/subskill";
+import { ConceptKeySuggest } from "../suggest/concept-key-suggest";
+import { RankKeyArrayEditor } from "../list-editors/rank-key";
+import { SubskillReferenceArrayEditor } from "../list-editors/subskill";
+import { MapEntry } from "ui-patterns/map-editor";
 
-export class SkillEditorUIMaker extends ConceptEditorUIMaker {
-    override MakeUI(view: GamifyLifeView, div: HTMLDivElement, skill: Skill) {
+export class SkillLoader extends ConceptLoader {
+    override Load(
+        view: GamifyLifeView,
+        div: HTMLDivElement,
+        skill: Skill,
+        doCheck: boolean = false
+    ) {
         div.empty();
         div.className = 'vbox gl-scroll gl-outer-div gl-fill';
-        this.MakeNameEditor(view, div.createDiv(), skill);
+        
+        if (doCheck && this.CheckIfConceptIsSaved(view, div, skill)) return;
+        
         this.MakeProgressDisplay(view, div, skill);
         this.MakeAliasesEditor(view, div.createDiv(), skill);
         this.MakeCategoryEditor(view, div.createDiv(), skill);
@@ -25,21 +31,23 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
     }
 
     MakeProgressDisplay(view: GamifyLifeView, div: HTMLDivElement, skill: Skill) {
-        const numUnits = SkillService.CalculateNumberOfUnits(view.life, skill);
-        const progress = SkillService.GetRankProgress(view.life, skill, numUnits);
+        const progress = skill.GetRankProgress(view.life);
+        const numUnits = progress.totalUnits;
 
-        if (progress.current !== null) {
-            HTMLHelper.CreateNewTextDiv(div, 'Rank: ' + progress.current.name);
+        if (progress.current !== undefined) {
+            HTMLHelper.CreateNewTextDiv(div, 'Rank: ' + progress.current.GetName(view.life));
+            if (progress.current.mediaPaths.length > 0) view.mediaRenderer.renderMedia(div.createDiv('hbox'), view, progress.current.mediaPaths[0]);
         }
         
         const progressDiv = div.createDiv('hbox gl-outer-div');
         const progressBar = progressDiv.createDiv('gl-fill gl-bordered gl-progress');
         progressBar.style.setProperty('--progress', (progress.progress * 100) + '%');
         
-        if (progress.next !== null) {
+        if (progress.next !== undefined) {
             progressBar.textContent = numUnits + '/' + progress.next.threshold;
-            HTMLHelper.CreateNewTextDiv(progressDiv, 'Next Rank: ' + progress.next.name);
-        } else if (progress.current !== null) {
+            HTMLHelper.CreateNewTextDiv(progressDiv, 'Next Rank: ' + progress.next.GetName(view.life));
+            if (progress.next.mediaPaths.length > 0) view.mediaRenderer.renderMedia(div.createDiv('hbox'), view, progress.next.mediaPaths[0]);
+        } else if (progress.current !== undefined) {
             progressBar.textContent = numUnits + '/' + progress.current.threshold;
         } else {
             progressBar.textContent = numUnits + '';
@@ -49,12 +57,12 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
     MakeUnitEditor(view: GamifyLifeView, div: HTMLDivElement, skill: Skill) {
         div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'XP unit for this skill:');
-        const input = div.createEl('input', { type: 'text', value: skill.unitName } );
-        const updateUnit = async (newUnit: Concept) => {
-            skill.unitName = newUnit.name;
+        const input = div.createEl('input', { type: 'text', value: skill.unitKey } );
+        const selectUnit = async (entry: MapEntry<string, Unit>) => {
+            skill.unitKey = entry.key;
             await view.onSave();
         };
-        new ConceptSuggest(input, view.life, skill, view.app, updateUnit, ['Skill Unit']);
+        new ConceptKeySuggest(input, view.life, skill, view.app, selectUnit, ['Unit']);
     }
     
     MakeRanksEditor(
@@ -62,10 +70,9 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
         div: HTMLDivElement,
         skill: Skill
     ) {
-        div.className = 'hbox';
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Ranks:');
-        const listEditor = new RankListEditor(div.createDiv(), skill.rankNames, view.onSave);
-        listEditor.Render(view);
+        new RankKeyArrayEditor(skill, div.createDiv(), view);
     }
 
     MakeSubskillsEditor(
@@ -73,9 +80,8 @@ export class SkillEditorUIMaker extends ConceptEditorUIMaker {
         div: HTMLDivElement,
         skill: Skill
     ) {
-        div.className = 'hbox';
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Subskills:');
-        const listEditor = new SubskillListEditor(skill, div.createDiv(), skill.subskills, view.onSave);
-        listEditor.Render(view);
+        new SubskillReferenceArrayEditor(skill, div.createDiv(), view);
     }
 }

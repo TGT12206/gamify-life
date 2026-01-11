@@ -1,5 +1,5 @@
-import { ConceptEditorUIMaker } from "./concept";
+import { ConceptLoader } from "./concept";
 
-export class PersonEditorUIMaker extends ConceptEditorUIMaker {
+export class PersonLoader extends ConceptLoader {
     
 }

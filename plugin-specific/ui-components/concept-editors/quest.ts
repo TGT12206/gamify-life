@@ -1,30 +1,26 @@
 import { Quest } from "plugin-specific/models/quest";
 import { GamifyLifeView } from "../gamify-life-view";
-import { ConceptEditorUIMaker } from "./concept";
+import { ConceptLoader } from "./concept";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { QuestType, questTypes } from "plugin-specific/models/const";
-import { DailyStartTimeListEditor } from "../list-editors/start-time/daily";
-import { YearlyStartTimeListEditor } from "../list-editors/start-time/yearly";
-import { MonthlyStartTimeListEditor } from "../list-editors/start-time/monthly";
-import { WeeklyStartTimeListEditor } from "../list-editors/start-time/weekly";
-import { QuestService } from "plugin-specific/services/quest";
+import { StartTimeArrayEditor } from "../list-editors/start-time";
 
-export class QuestEditorUIMaker extends ConceptEditorUIMaker {
-    override MakeUI(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
-        super.MakeUI(view, div, quest);
+export class QuestLoader extends ConceptLoader {
+    override Load(view: GamifyLifeView, div: HTMLDivElement, quest: Quest, doCheck: boolean = false) {
+        super.Load(view, div, quest, doCheck);
         this.MakeTypeEditor(view, div.createDiv(), quest);
         this.MakeInitialDateEditor(view, div.createDiv(), quest);
     }
     
     MakeCompletionCheckbox(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
         const completed = div.createEl('input', { type: 'checkbox' } );
-        if (QuestService.IsCompleted(quest)) {
+        if (quest.isCompleted) {
             completed.checked = true;
-        } else if (quest.type === 'one-off') {
+        } else if (quest.type === 'One-Off') {
             completed.checked = false;
         }
         view.registerDomEvent(completed, 'click', async () => {
-            QuestService.ToggleCompletion(quest);
+            quest.ToggleCompletion();
             await view.onSave();
         });
     }
@@ -53,78 +49,29 @@ export class QuestEditorUIMaker extends ConceptEditorUIMaker {
 
     private DisplayTimeInfo(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
         div.empty();
-        const type = quest.type;
-        switch(type) {
-            case 'daily':
-                return this.DailyRepeatEditor(view, div, quest);
-            case 'one-off':
+        let intervalText = ' before repeat';
+        switch(quest.type) {
+            case 'Yearly':
+                intervalText = 'Years' + intervalText;
+                break;
+            case 'Monthly':
+                intervalText = 'Months' + intervalText;
+                break;
+            case 'Weekly':
+                intervalText = 'Weeks' + intervalText;
+                break;
+            case 'Daily':
+                intervalText = 'Days' + intervalText;
+                break;
+            case 'One-Off':
                 return;
-            case 'weekly':
-                return this.WeeklyRepeatEditor(view, div, quest);
-            case 'monthly':
-                return this.MonthlyRepeatEditor(view, div, quest);
-            case 'yearly':
-                return this.YearlyRepeatEditor(view, div, quest);
         }
-    }
 
-    private DailyRepeatEditor(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
-        div.empty();
-
-        HTMLHelper.CreateNewTextDiv(div, 'Days before repeat');
-        const interval = div.createEl('input', { type: 'number', value: quest.interval + '' } );
-
-        HTMLHelper.CreateNewTextDiv(div, 'Repeat on:');
-        const listEditor = new DailyStartTimeListEditor(div.createDiv(), quest.startTimes, view.onSave);
-        listEditor.Render(view);
-
-        view.registerDomEvent(interval, 'change', async () => {
-            quest.interval = parseInt(interval.value);
-            await view.onSave();
-        });
-    }
-
-    private WeeklyRepeatEditor(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
-        div.empty();
-
-        HTMLHelper.CreateNewTextDiv(div, 'Weeks before repeat');
+        HTMLHelper.CreateNewTextDiv(div, intervalText);
         const interval = div.createEl('input', { type: 'number', value: quest.interval + '' } );
         
         HTMLHelper.CreateNewTextDiv(div, 'Repeat on:');
-        const listEditor = new WeeklyStartTimeListEditor(div.createDiv(), quest.startTimes, view.onSave);
-        listEditor.Render(view);
-
-        view.registerDomEvent(interval, 'change', async () => {
-            quest.interval = parseInt(interval.value);
-            await view.onSave();
-        });
-    }
-
-    private MonthlyRepeatEditor(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
-        div.empty();
-
-        HTMLHelper.CreateNewTextDiv(div, 'Months before repeat');
-        const interval = div.createEl('input', { type: 'number', value: quest.interval + '' } );
-        
-        HTMLHelper.CreateNewTextDiv(div, 'Repeat on:');
-        const listEditor = new MonthlyStartTimeListEditor(div.createDiv(), quest.startTimes, view.onSave);
-        listEditor.Render(view);
-
-        view.registerDomEvent(interval, 'change', async () => {
-            quest.interval = parseInt(interval.value);
-            await view.onSave();
-        });
-    }
-
-    private YearlyRepeatEditor(view: GamifyLifeView, div: HTMLDivElement, quest: Quest) {
-        div.empty();
-
-        HTMLHelper.CreateNewTextDiv(div, 'Years before repeat');
-        const interval = div.createEl('input', { type: 'number', value: quest.interval + '' } );
-        
-        HTMLHelper.CreateNewTextDiv(div, 'Repeat on:');
-        const listEditor = new YearlyStartTimeListEditor(div.createDiv(), quest.startTimes, view.onSave);
-        listEditor.Render(view);
+        new StartTimeArrayEditor(quest, div.createDiv(), view);
 
         view.registerDomEvent(interval, 'change', async () => {
             quest.interval = parseInt(interval.value);

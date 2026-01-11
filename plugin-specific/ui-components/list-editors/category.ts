@@ -1,29 +1,28 @@
-import { ItemView, Notice, setIcon } from "obsidian";
-import { Concept } from "plugin-specific/models/concept";
-import { ListEditor } from "ui-patterns/list-editor";
-import { CategoryUIMaker } from "../ui-makers/category";
+import { GamifyLifeView } from "../gamify-life-view";
+import { GenerateUniqueStringKey, MapEditor, MapEntry } from "ui-patterns/map-editor";
+import { CategoryUI } from "../item-ui/category";
 
-export class CategoryListEditor extends ListEditor<string> {
-    constructor(concept: Concept, parentDiv: HTMLDivElement, categories: string[], onSave: () => Promise<void>) {
-        const uiMaker = new CategoryUIMaker(concept);
-        super(concept, parentDiv, categories, () => { return '' }, uiMaker, onSave);
-        this.isVertical = false;
-        uiMaker.isVertical = true;
-    }
-    protected override CreateAddButton(view: ItemView): void {
-        const mainArray = this.mainArray;
-        const addButton = this.parentDiv.createEl('button');
-        setIcon(addButton, 'plus');
+export class CategoryList extends MapEditor<string, string> {
+    constructor(div: HTMLDivElement, view: GamifyLifeView) {
+        const itemUI = new CategoryUI();
+        super(div, view.life.categories, itemUI);
 
-        view.registerDomEvent(addButton, 'click', async () => {
-            if (mainArray.contains('')) {
-                new Notice('Choose a category before adding new ones!');
-                return;
-            }
-            const newItem = await this.newObjMaker();
-            this.mainArray.push(newItem);
-            await this.onSave();
-            await this.RefreshList(view);
-        });
+        this.makeNewEntry = () => {
+            const key = GenerateUniqueStringKey();
+            const value = '';
+            return new MapEntry(key, value);
+        };
+        this.onSave = view.onSave;
+        
+        this.simpleDisplayOrder = (a, b) => { return a.value.localeCompare(b.value, undefined, { numeric: true }) };
+        
+        this.isVertical = true;
+        this.itemsPerLine = 5;
+        this.enableAddButton = true;
+        this.keyBased = true;
+
+        itemUI.isVertical = true;
+
+        this.Render(view);
     }
 }

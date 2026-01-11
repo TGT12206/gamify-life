@@ -1,4 +1,4 @@
-import { ItemView, setIcon } from "obsidian";
+import { ItemView, Notice, setIcon } from "obsidian";
 
 export class HTMLHelper {
     static AutoAdjustWidth(cleanDiv: HTMLDivElement, el: HTMLElement, text: string) {
@@ -37,8 +37,7 @@ export class HTMLHelper {
         div.textContent = text;
     }
     static CreateNewTextDiv(parentDiv: HTMLDivElement, text: string, classes: string = ''): HTMLDivElement {
-        const newDiv = parentDiv.createEl('div', { text: text } );
-        newDiv.className = classes;
+        const newDiv = parentDiv.createEl('div', { text: text, cls: 'gl-text-div ' + classes } );
         return newDiv;
     }
     static async CreateList(

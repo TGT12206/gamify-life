@@ -1,12 +1,12 @@
 import { Concept } from "plugin-specific/models/concept";
 import { GamifyLifeView } from "../gamify-life-view";
-import { ConceptEditorUIMaker } from "./concept";
+import { ConceptLoader } from "./concept";
 import { Rank } from "plugin-specific/models/skill";
 import { HTMLHelper } from "ui-patterns/html-helper";
 
-export class RankEditorUIMaker extends ConceptEditorUIMaker {
-    override MakeUI(view: GamifyLifeView, div: HTMLDivElement, concept: Concept) {
-        super.MakeUI(view, div, concept);
+export class RankLoader extends ConceptLoader {
+    override Load(view: GamifyLifeView, div: HTMLDivElement, concept: Concept, doCheck: boolean = false) {
+        super.Load(view, div, concept, doCheck);
         this.MakeThresholdEditor(view, div.createDiv(), <Rank> concept);
     }
 

@@ -1,22 +1,29 @@
 import { HTMLHelper } from "ui-patterns/html-helper";
-import { DescribableEditorUIMaker } from "./describable";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Concept } from "plugin-specific/models/concept";
-import { RelatedObservationGridEditor } from "../list-editors/related-observation";
-import { CategoryListEditor } from "../list-editors/category";
-import { AliasListEditor } from "../list-editors/alias";
-import { ConceptService } from "plugin-specific/services/concept";
-import { Notice } from "obsidian";
+import { RelatedClaimGrid } from "../list-editors/related-claim";
+import { AliasArrayEditor } from "../list-editors/alias";
+import { Life } from "plugin-specific/models/life";
+import { CategoryKeyArrayEditor } from "../list-editors/category-key";
+import { MediaPathArrayEditor } from "../list-editors/media-path";
+import { PageLoader } from "../page";
 
-export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
-    MakeUI(
+export class ConceptLoader extends PageLoader {
+    constructor(public life: Life) {
+        super();
+    }
+
+    Load(
         view: GamifyLifeView,
         div: HTMLDivElement,
-        concept: Concept
+        concept: Concept,
+        doCheck: boolean = false
     ) {
         div.empty();
         div.className = 'vbox gl-scroll gl-outer-div gl-fill';
-        this.MakeNameEditor(view, div.createDiv(), concept);
+        
+        if (doCheck && this.CheckIfConceptIsSaved(view, div, concept)) return;
+
         this.MakeAliasesEditor(view, div.createDiv(), concept);
         this.MakeCategoryEditor(view, div.createDiv(), concept);
         this.MakeMediaListEditor(view, div.createDiv(), concept);
@@ -24,39 +31,17 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         this.MakeObservationListDisplay(view, div.createDiv(), concept);
     }
 
-    protected MakeNameEditor(
+    CheckIfConceptIsSaved(
         view: GamifyLifeView,
         div: HTMLDivElement,
         concept: Concept
     ) {
-        div.empty();
-        div.addClass('vbox'); 
-
-        if (concept.name === 'Self') {
-            HTMLHelper.CreateNewTextDiv(div, 'Name: Self');
-            return;
+        const concepts = [...view.life.concepts.values()];
+        if (!concepts.contains(concept)) {
+            HTMLHelper.CreateNewTextDiv(div, 'This concept has been deleted.');
+            return true;
         }
-
-        HTMLHelper.CreateNewTextDiv(div, 'Name');
-
-        const nameInput = div.createEl('input', {
-            type: 'text',
-            value: concept.name
-        });
-        nameInput.className = 'gl-fill';
-
-        view.registerDomEvent(nameInput, 'change', async () => {
-            const newValue = nameInput.value;
-
-            if (ConceptService.GetConceptByName(this.life, newValue) !== undefined) {
-                nameInput.value = concept.name;
-                new Notice('That name has already been used!');
-                return;
-            }
-            
-            ConceptService.ChangeConceptName(this.life, concept, newValue);
-            await view.onSave();
-        })
+        return false;
     }
 
     protected MakeAliasesEditor(
@@ -64,10 +49,9 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         div: HTMLDivElement,
         concept: Concept
     ) {
-        div.className = 'hbox';
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Aliases:');
-        const listEditor = new AliasListEditor(div.createDiv(), concept.aliases, view.onSave);
-        listEditor.Render(view);
+        new AliasArrayEditor(div.createDiv(), concept.aliases, view);
     }
 
     protected MakeCategoryEditor(
@@ -75,10 +59,41 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         div: HTMLDivElement,
         concept: Concept
     ) {
-        div.className = 'hbox';
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Categories:');
-        const listEditor = new CategoryListEditor(concept, div.createDiv(), concept.categoryKeys, view.onSave);
-        listEditor.Render(view);
+        new CategoryKeyArrayEditor(concept, div.createDiv(), view);
+    }
+    
+    MakeMediaListEditor(
+        view: GamifyLifeView,
+        div: HTMLDivElement,
+        concept: Concept
+    ) {
+        div.className = 'hbox gl-outer-div';
+        HTMLHelper.CreateNewTextDiv(div, 'Media:');
+        new MediaPathArrayEditor(div.createDiv(), concept.mediaPaths, view);
+    }
+
+    MakeDescriptionEditor(
+        view: GamifyLifeView,
+        div: HTMLDivElement,
+        concept: Concept
+    ) {
+        div.empty();
+        div.addClass('vbox');
+        div.addClass('gl-outer-div');
+
+        HTMLHelper.CreateNewTextDiv(div, 'Description');
+
+        const input = div.createEl('textarea', {
+            text: concept.description
+        });
+        input.className = 'gl-fill';
+
+        view.registerDomEvent(input, 'change', async () => {
+            concept.description = input.value;
+            await view.onSave();
+        });
     }
 
     protected MakeObservationListDisplay(
@@ -86,9 +101,8 @@ export class ConceptEditorUIMaker extends DescribableEditorUIMaker {
         div: HTMLDivElement,
         concept: Concept
     ) {
-        div.className = 'vbox';
+        div.className = 'vbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Observations:');
-        const listEditor = new RelatedObservationGridEditor(div.createDiv(), view.life, concept, view.onSave);
-        listEditor.Render(view);
+        new RelatedClaimGrid(concept, div.createDiv(), view);
     }
 }

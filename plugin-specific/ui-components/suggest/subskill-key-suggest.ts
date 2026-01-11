@@ -1,25 +1,23 @@
-import { App, AbstractInputSuggest } from 'obsidian';
+import { App } from 'obsidian';
 import { Concept } from 'plugin-specific/models/concept';
 import { Life } from 'plugin-specific/models/life';
 import { Skill } from 'plugin-specific/models/skill';
-import { KeyService } from 'plugin-specific/services/key';
-import { ConceptSuggest } from './concept-suggest';
-import { ConceptService } from 'plugin-specific/services/concept';
+import { ConceptKeySuggest } from './concept-key-suggest';
+import { MapEntry } from 'ui-patterns/map-editor';
 
-export class SubskillSuggest extends ConceptSuggest {
+export class SubskillKeySuggest extends ConceptKeySuggest {
     constructor(
         public inputEl: HTMLInputElement,
         public life: Life,
         public root: Skill,
         app: App,
-        public callback: (concept: Concept) => Promise<void> = async () => {}
+        public callback: (entry: MapEntry<string, Skill>) => Promise<void> = async () => {}
     ) {
         super(inputEl, life, root, app, callback, ['Skill']);
     }
 
     protected override CheckCategories(concept: Concept) {
-        const currCategories = concept.categoryKeys;
-        return currCategories.contains('Skill');
+        return concept.baseCategory === 'Skill';
     }
 
     protected override CheckIfRecursive(concept: Concept) {
@@ -28,8 +26,8 @@ export class SubskillSuggest extends ConceptSuggest {
         const skill = <Skill> concept;
 
         for (let i = 0; i < skill.subskills.length; i++) {
-            const subskillName = skill.subskills[i].name;
-            const subskill = ConceptService.GetConceptByName(this.life, subskillName);
+            const subskillKey = skill.subskills[i].key;
+            const subskill = this.life.concepts.get(subskillKey);
             
             if (subskill !== undefined) {
                 if (this.CheckIfRecursive(subskill)) {

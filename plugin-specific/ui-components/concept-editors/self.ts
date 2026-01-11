@@ -1,23 +1,22 @@
-import { ConceptEditorUIMaker } from "./concept";
+import { ConceptLoader } from "./concept";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Concept } from "plugin-specific/models/concept";
-import { SkillCardGridEditor } from "../list-editors/skill-card";
+import { SkillCardGrid } from "../list-editors/skill-card";
 
-export class SelfEditorUIMaker extends ConceptEditorUIMaker {
-    override MakeUI(
+export class SelfLoader extends ConceptLoader {
+    override Load(
         view: GamifyLifeView,
         div: HTMLDivElement,
-        concept: Concept
+        concept: Concept,
+        doCheck: boolean = false
     ): void {
-        super.MakeUI(view, div, concept);
+        super.Load(view, div, concept, doCheck);
         this.MakeSkillCardGrid(view, div.createDiv());
     }
     MakeSkillCardGrid(
         view: GamifyLifeView,
         div: HTMLDivElement
     ) {
-        const listEditor = new SkillCardGridEditor(div, this.life.concepts, view.onSave);
-        listEditor.Render(view);
+        new SkillCardGrid(div, view);
     }
-
 }

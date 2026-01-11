@@ -48,8 +48,8 @@ button:hover {
 	gap: 1vh;
 }
 
-.gl-tab-bar {
-	width: 7.5vh;
+.gl-text-div {
+	white-space: break-spaces;
 }
 
 #gl-unselected-tab {
@@ -64,12 +64,12 @@ button:hover {
 	flex-grow: 1;
 }
 
-.gl-module {
-	height: 100%;
+.gl-wide {
+	width: 100%;
 }
 
-.gl-grid {
-	width: 100%;
+.gl-module {
+	height: 100%;
 }
 
 .gl-grid-card {
@@ -114,21 +114,24 @@ button:hover {
 	scrollbar-width: none;
 }
 
-#gl-grid-add-button {
+.gl-floating {
 	position: absolute;
-	transform: translate(-50%, -50%);
+	transform: translate(0%, 0%);
+}
+
+.gl-floating-edit-button {
+	margin-left: 0;
+}
+
+.gl-floating-remove-button {
+	margin-left: auto;
+}
+
+.gl-floating.add-button {
+	position: sticky;
+	transform: translate(0%, 0%);
 	bottom: 0%;
 	right: 0%;
-}
-
-#gl-progress-bar-fill {
-	background-color: var(--color-accent);
-	height: 100%;
-}
-
-#gl-progress-bar-empty {
-	background-color: transparent;
-	height: 100%;
 }
 
 #gl-submit {

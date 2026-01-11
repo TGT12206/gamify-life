@@ -2,6 +2,12 @@ import { Notice, setIcon, Vault, View } from "obsidian";
 
 export class MediaRenderer {
     
+    cache: Map<string, string>;
+
+    constructor() {
+        this.cache = new Map();
+    }
+
     static get validFileTypes() {
         const output: string[] = [];
         
@@ -21,6 +27,9 @@ export class MediaRenderer {
         return output;
     }
 
+    static isValid(extension: string) {
+        return this.validFileTypes.contains(extension.toLowerCase());
+    }
     static isImage(extension: string) {
         return this.imageFileTypes.contains(extension.toLowerCase());
     }
@@ -49,7 +58,7 @@ export class MediaRenderer {
         ]
     };
 
-    static async renderMedia(mediaDiv: HTMLDivElement, view: View, path: string) {
+    async renderMedia(mediaDiv: HTMLDivElement, view: View, path: string) {
         const vault = view.app.vault;
         mediaDiv.empty();
         const src = await this.getSrc(mediaDiv, vault, path);
@@ -62,22 +71,22 @@ export class MediaRenderer {
         }
 
         let mediaEl;
-        if (this.isImage(extension)) {
+        if (MediaRenderer.isImage(extension)) {
             mediaEl = mediaDiv.createEl('img');
-        } else if (this.isVideo(extension)) {
+        } else if (MediaRenderer.isVideo(extension)) {
             mediaEl = mediaDiv.createEl('video');
-            mediaEl.controls = true;
+            mediaEl.loop = true;
         } else {
             mediaEl = mediaDiv.createEl('audio');
-            mediaEl.controls = true;
+            mediaEl.loop = true;
         }
-        mediaEl.className = 'gl-media';
+        mediaEl.className = 'gl-media gl-bordered pointer-hover';
         mediaEl.src = src;
 
-        const open = mediaDiv.createEl('button', { cls: 'gl-fit-content' } );
-        setIcon(open, 'external-link');
+        // const open = mediaDiv.createEl('button', { cls: 'gl-fit-content' } );
+        // setIcon(open, 'external-link');
 
-        view.registerDomEvent(open, 'click', () => {
+        view.registerDomEvent(mediaEl, 'click', () => {
             const tFile = view.app.vault.getFileByPath(path);
             if (tFile === null) {
                 return new Notice(path + ' not found');
@@ -86,7 +95,10 @@ export class MediaRenderer {
         });
     }
 
-    static async getSrc(mediaDiv: HTMLDivElement, vault: Vault, path: string) {
+    async getSrc(mediaDiv: HTMLDivElement, vault: Vault, path: string) {
+        let url = this.cache.get(path);
+        if (url !== undefined) return url;
+
         mediaDiv.empty();
         const tFile = vault.getFileByPath(path);
         if (tFile === null) {
@@ -95,6 +107,19 @@ export class MediaRenderer {
         }
         const arrayBuffer = await vault.readBinary(tFile);
         const blob = new Blob([arrayBuffer]);
-        return URL.createObjectURL(blob);
+        url = URL.createObjectURL(blob);
+        this.cache.set(path, url);
+        return url;
+    }
+
+    async changePath(oldPath: string, newPath: string) {
+        const url = this.cache.get(oldPath);
+        if (url === undefined) return;
+        this.cache.delete(oldPath);
+        this.cache.set(newPath, url);
+    }
+
+    async forgetPath(path: string) {
+        this.cache.delete(path);
     }
 }

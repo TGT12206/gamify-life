@@ -1,36 +1,74 @@
 import { Concept } from "./concept";
-import { KeyValue } from "./key-value";
-import { Moment } from "./moment";
-import { Observation } from "./observation";
-import { Quest } from "./quest";
-import { Rank, Skill, SkillUnit } from "./skill";
 
 export class Life {
-    categories: KeyValue<string>[] = [];
-    concepts: Concept[] = [];
-    mediaPaths: KeyValue<string>[] = [];
-    get skills(): Skill[] {
-        return <Skill[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Skill'));
+    categories: Map<string, string>;
+    concepts: Map<string, Concept>;
+    
+    FindKey(concept: Concept): string | undefined {
+        const entry = [...this.concepts.entries()].find(e => e[1] === concept);
+        if (entry === undefined) {
+            return undefined;
+        }
+        return entry[0];
     }
-    get ranks(): Rank[] {
-        return <Rank[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Skill Rank'));
+
+    /**
+     * Deletes the category from the plugin, propagating the change
+     */
+    DeleteCategory(key: string): void {
+        this.categories.delete(key);
+
+        const concepts = [...this.concepts.values()];
+        for (let i = 0; i < concepts.length; i++) {
+            concepts[i].RemoveCategoryFromSelf(key);
+        }
     }
-    get skillUnits(): SkillUnit[] {
-        return <SkillUnit[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Skill Unit'));
+
+    /**
+     * Changes the category key, propagating the change throughout the plugin
+     */
+    ChangeCategoryKey(oldKey: string, newKey: string): void {
+        const referencedConcept = this.categories.get(oldKey);
+        if (referencedConcept === undefined) return;
+
+        this.categories.delete(oldKey);
+        this.categories.set(newKey, referencedConcept);
+
+        const concepts = [...this.concepts.values()];
+        for (let i = 0; i < concepts.length; i++) {
+            concepts[i].ChangeCategoryInSelf(oldKey, newKey);
+        }
     }
-    get moments(): Moment[] {
-        return <Moment[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Moment'));
+
+    /**
+     * Deletes the concept from the plugin, propagating the change
+     */
+    DeleteConcept(key: string): void {
+        this.concepts.delete(key);
+
+        const concepts = [...this.concepts.values()]
+        for (let i = 0; i < concepts.length; i++) {
+            concepts[i].RemoveConceptReferenceFromSelf(key);
+        }
     }
-    get observations(): Observation[] {
-        return <Observation[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Observation'));
+
+    /**
+     * Deletes the media path from the plugin, propagating the change
+     */
+    DeleteMediaPath(path: string): void {
+        const concepts = [...this.concepts.values()];
+        for (let i = 0; i < concepts.length; i++) {
+            concepts[i].RemoveMediaPathFromSelf(path);
+        }
     }
-    get quests(): Quest[] {
-        return <Quest[]> this.concepts
-            .filter(c => c.categoryKeys.includes('Observation'));
+
+    /**
+     * Propagates changes to a media file's path throughout the plugin
+     */
+    ChangeMediaPath(oldPath: string, newPath: string): void {
+        const concepts = [...this.concepts.values()];
+        for (let i = 0; i < concepts.length; i++) {
+            concepts[i].ChangeMediaPathInSelf(oldPath, newPath);
+        }
     }
 }

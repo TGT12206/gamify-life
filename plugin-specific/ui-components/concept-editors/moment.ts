@@ -1,27 +1,26 @@
 import { HTMLHelper } from "ui-patterns/html-helper";
-import { ConceptEditorUIMaker } from "./concept";
+import { ConceptLoader } from "./concept";
 import { GamifyLifeView } from "../gamify-life-view";
 import { Moment } from "plugin-specific/models/moment";
 import { setIcon } from "obsidian";
-import { ConceptNameListEditor } from "../list-editors/concept-name";
-import { GainedSkillUnitListEditor } from "../list-editors/gained-skill-unit";
+import { ConceptKeyArrayEditor } from "../list-editors/concept-key";
+import { EarnedSkillUnitArrayEditor } from "../list-editors/earned-skill-unit";
 
-export class MomentEditorUIMaker extends ConceptEditorUIMaker {
-    override MakeUI(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
-        super.MakeUI(view, div, moment);
+export class MomentLoader extends ConceptLoader {
+    override Load(view: GamifyLifeView, div: HTMLDivElement, moment: Moment, doCheck: boolean = false) {
+        super.Load(view, div, moment, doCheck);
         this.MakeConceptKeysEditor(view, div.createDiv(), moment);
         this.MakeDateTimeEditor(view, div.createDiv(), moment);
-        this.MakeGainedSkillUnitsEditor(view, div.createDiv(), moment);
+        this.MakeEarnedSkillUnitsEditor(view, div.createDiv(), moment);
     }
 
-    protected MakeConceptKeysEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
-        div.className = 'hbox';
+    MakeConceptKeysEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Concepts involved:');
-        const listEditor = new ConceptNameListEditor(moment, div.createDiv(), moment.conceptNames, view.onSave);
-        listEditor.Render(view);
+        new ConceptKeyArrayEditor(moment, div.createDiv(), view);
     }
 
-    protected MakeDateTimeEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
+    MakeDateTimeEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
         div.className = 'hbox gl-outer-div';
         const startDiv = div.createDiv('vbox gl-outer-div');
         const endDiv = div.createDiv('vbox gl-outer-div');
@@ -141,10 +140,9 @@ export class MomentEditorUIMaker extends ConceptEditorUIMaker {
             await view.onSave();
         });
     }
-    protected MakeGainedSkillUnitsEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
-        div.className = 'hbox';
+    MakeEarnedSkillUnitsEditor(view: GamifyLifeView, div: HTMLDivElement, moment: Moment) {
+        div.className = 'hbox gl-outer-div';
         HTMLHelper.CreateNewTextDiv(div, 'Gained Skill Units:');
-        const listEditor = new GainedSkillUnitListEditor(moment, div.createDiv(), moment.skillUnitsGained, view.onSave);
-        listEditor.Render(view);
+        new EarnedSkillUnitArrayEditor(moment, div.createDiv(), view);
     }
 }

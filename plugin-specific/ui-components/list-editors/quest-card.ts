@@ -1,54 +1,39 @@
-import { ListEditor } from "ui-patterns/list-editor";
 import { Concept } from "plugin-specific/models/concept";
-import { QuestCardUIMaker } from "../ui-makers/quest-card";
 import { Quest } from "plugin-specific/models/quest";
 import { GamifyLifeView } from "../gamify-life-view";
-import { QuestService } from "plugin-specific/services/quest";
+import { GenerateUniqueStringKey, MapEditor, MapEntry } from "ui-patterns/map-editor";
+import { QuestCardUI } from "../item-ui/quest-card";
 
-export class QuestCardListEditor extends ListEditor<Concept> {
-    constructor(parentDiv: HTMLDivElement, concepts: Concept[], onSave: () => Promise<void>) {
-        const uiMaker = new QuestCardUIMaker();
-        super(undefined, parentDiv, concepts, () => { return new Quest() }, uiMaker, onSave);
-        this.isVertical = true;
-        uiMaker.isVertical = false;
-        this.enableAddButton = false;
-    }
-    override async RefreshList(view: GamifyLifeView): Promise<void> {
-        this.listDiv.empty();
+export class QuestCardList extends MapEditor<string, Concept> {
+    constructor(div: HTMLDivElement, view: GamifyLifeView) {
+        const itemUI = new QuestCardUI();
+        super(div, view.life.concepts, itemUI);
 
-        const questData = [];
-        for (let i = 0; i < this.mainArray.length; i++) {
-            if (!this.mainArray[i].categoryKeys.contains('Quest')) {
-                continue;
-            }
-            const q = <Quest> view.life.concepts[i];
-            questData.push({
-                index: i,
-                isDue: !QuestService.IsCompleted(q),
-                lastStart: QuestService.MostRecentStartTime(q)
-            });
-        }
+        this.makeNewEntry = () => {
+            const key = GenerateUniqueStringKey();
+            const value = new Quest()
+            return new MapEntry(key, value)
+        };
+        this.onSave = view.onSave;
+        
+        this.simpleDisplayFilter = entry => entry.value.baseCategory === 'Quest';
+        this.simpleDisplayOrder = (a: MapEntry<string, Quest>, b: MapEntry<string, Quest>) => { 
+            const q1 = <Quest> a.value; const q2 = <Quest> b.value;
+            const aDue = !q1.isCompleted; const bDue = !q2.isCompleted;
 
-        questData.sort((a, b) => {
-            if (a.isDue !== b.isDue) return a.isDue ? -1 : 1;
-            const timeA = a.lastStart?.getTime() ?? 0;
-            const timeB = b.lastStart?.getTime() ?? 0;
+            if (aDue !== bDue) return aDue ? -1 : 1;
+            const timeA = q1.mostRecentStartTime?.getTime() ?? 0;
+            const timeB = q2.mostRecentStartTime?.getTime() ?? 0;
             return timeB - timeA;
-        });
+        };
+        
+        this.isVertical = true;
+        this.itemsPerLine = 1;
+        this.enableAddButton = true;
+        this.keyBased = false;
 
-        for (let i = 0; i < questData.length; i++) {
-            const data = questData[i];
-            const container = this.listDiv.createDiv('gl-quest-item ' + (this.objUIMaker.isVertical ? 'vbox' : 'hbox'));
-            if (!data.isDue) container.addClass('gl-quest-complete');
-            
-            await this.objUIMaker.MakeUI(
-                view,
-                container,
-                this.mainArray,
-                data.index,
-                this.onSave,
-                () => this.RefreshList(view)
-            );
-        }
+        itemUI.isVertical = true;
+
+        this.Render(view);
     }
 }
