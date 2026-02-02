@@ -1,12 +1,7 @@
 import { Notice, setIcon, Vault, View } from "obsidian";
 
 export class MediaRenderer {
-    
-    cache: Map<string, string>;
-
-    constructor() {
-        this.cache = new Map();
-    }
+    constructor() {}
 
     static get validFileTypes() {
         const output: string[] = [];
@@ -61,7 +56,7 @@ export class MediaRenderer {
     async renderMedia(mediaDiv: HTMLDivElement, view: View, path: string) {
         const vault = view.app.vault;
         mediaDiv.empty();
-        const src = await this.getSrc(mediaDiv, vault, path);
+        const src = this.getSrc(vault, path);
         
         const extension = path.split('.').last();
 
@@ -83,9 +78,6 @@ export class MediaRenderer {
         mediaEl.className = 'gl-media gl-bordered pointer-hover';
         mediaEl.src = src;
 
-        // const open = mediaDiv.createEl('button', { cls: 'gl-fit-content' } );
-        // setIcon(open, 'external-link');
-
         view.registerDomEvent(mediaEl, 'click', () => {
             const tFile = view.app.vault.getFileByPath(path);
             if (tFile === null) {
@@ -95,31 +87,13 @@ export class MediaRenderer {
         });
     }
 
-    async getSrc(mediaDiv: HTMLDivElement, vault: Vault, path: string) {
-        let url = this.cache.get(path);
-        if (url !== undefined) return url;
-
-        mediaDiv.empty();
+    getSrc(vault: Vault, path: string) {
         const tFile = vault.getFileByPath(path);
         if (tFile === null) {
             new Notice('File not found at ' + path);
             throw new Error('File not found at ' + path);
         }
-        const arrayBuffer = await vault.readBinary(tFile);
-        const blob = new Blob([arrayBuffer]);
-        url = URL.createObjectURL(blob);
-        this.cache.set(path, url);
+        const url = vault.getResourcePath(tFile);
         return url;
-    }
-
-    async changePath(oldPath: string, newPath: string) {
-        const url = this.cache.get(oldPath);
-        if (url === undefined) return;
-        this.cache.delete(oldPath);
-        this.cache.set(newPath, url);
-    }
-
-    async forgetPath(path: string) {
-        this.cache.delete(path);
     }
 }
