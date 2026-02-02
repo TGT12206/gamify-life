@@ -3,22 +3,21 @@ import { HTMLHelper } from "ui-patterns/html-helper";
 import { SearchCardGrid, SearchContext } from "../list-editors/search-card";
 import { MapEditor } from "ui-patterns/map-editor";
 import { MapEntryUI } from "ui-patterns/map-entry-ui";
-import { ModuleLoader } from "./module";
+import { PageLoader } from "../page";
 
-export class SearchModuleLoader extends ModuleLoader {
-    internalData: SearchContext;
-    Load(view: GamifyLifeView, div: HTMLDivElement): void {
+export class SearchModuleLoader extends PageLoader {
+    Load(view: GamifyLifeView, div: HTMLDivElement, context: SearchContext): void {
+        div.empty();
         div.className = 'gl-scroll gl-fill gl-outer-div vbox';
     
         const searchDiv = div.createDiv('gl-outer-div vbox');
         const resultsDiv = div.createDiv('gl-outer-div vbox');
 
-        this.internalData = this.internalData === undefined ? new SearchContext(view.life) : this.internalData;
         const resultsSection = new SearchCardGrid(
-            this.internalData, resultsDiv, view
+            context, resultsDiv, view
         );
 
-        this.DisplaySearchBar(view, searchDiv, this.internalData, resultsSection);
+        this.DisplaySearchBar(view, searchDiv, context, resultsSection);
     }
     DisplaySearchBar(view: GamifyLifeView, div: HTMLDivElement, context: SearchContext, resultsSection: SearchCardGrid) {
         div.className = 'gl-outer-div gl-bordered vbox';

@@ -16,6 +16,8 @@
 
 .grid {
 	display: grid;
+	grid-template-columns: var(--num-rows);
+	grid-template-rows: var(--num-columns);
 }
 
 .gl-pos-anchor {
@@ -53,10 +55,11 @@ button:hover {
 }
 
 #gl-unselected-tab {
-	background-color: 'transparent';
+	background-color: transparent;
+	transition: 500ms;
 }
 
-#gl-selected-tab {
+:is(#gl-unselected-tab:hover, #gl-selected-tab) {
 	background-color: var(--color-accent);
 }
 

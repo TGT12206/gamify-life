@@ -3,17 +3,15 @@ import { Moment } from "plugin-specific/models/moment";
 import { HTMLHelper } from "ui-patterns/html-helper";
 import { MomentCardGrid } from "../list-editors/moment-card";
 import { GenerateUniqueStringKey } from "ui-patterns/map-editor";
-import { ModuleLoader } from "./module";
+import { PageLoader } from "../page";
 
-export class LogModuleLoader extends ModuleLoader {
-    override internalData: Moment;
-    Load(view: GamifyLifeView, div: HTMLDivElement): void {
+export class LogModuleLoader extends PageLoader {
+    Load(view: GamifyLifeView, div: HTMLDivElement, currentMoment: Moment): void {
+        div.empty();
         div.className = 'gl-scroll gl-fill gl-outer-div vbox';
-    
-        this.internalData = this.internalData === undefined ? this.CreateDefaultMoment() : this.internalData;
 
         const editorDiv = div.createDiv();
-        view.momentLoader.Load(view, editorDiv, this.internalData);
+        view.pageLoaders['Moment'].Load(view, editorDiv, currentMoment);
         editorDiv.classList.remove('gl-scroll');
 
         const submitButton = div.createEl('button', { text: 'submit' } );
@@ -27,14 +25,14 @@ export class LogModuleLoader extends ModuleLoader {
         const life = view.life;
 
         view.registerDomEvent(submitButton, 'click', async () => {
-            life.concepts.set(GenerateUniqueStringKey(), this.internalData);
+            life.concepts.set(GenerateUniqueStringKey(), <Moment> currentMoment);
             await view.onSave();
-            this.internalData = this.CreateDefaultMoment();
+            currentMoment = this.CreateDefaultMoment();
             div.empty();
-            this.Load(view, div);
+            this.Load(view, div, currentMoment);
         });
     }
-    private CreateDefaultMoment() {
+    CreateDefaultMoment() {
         const moment = new Moment();
         moment.startTime.setHours(0, 0, 0, 0);
         moment.endTime.setHours(23, 59, 0, 0);

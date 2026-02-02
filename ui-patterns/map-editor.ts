@@ -66,9 +66,9 @@ export class MapEditor<K, V> {
 
         const isGrid = this.isGrid;
         if (this.isVertical) {
-            if (isGrid) this.mapDiv.style.gridTemplateColumns = 'repeat(' + this.itemsPerLine + ', 1fr)';
+            if (isGrid) this.mapDiv.style.setProperty('--num-rows', 'repeat(' + this.itemsPerLine + ', 1fr)');
         } else {
-            if (isGrid) this.mapDiv.style.gridTemplateRows = 'repeat(' + this.itemsPerLine + ', 1fr)';
+            if (isGrid) this.mapDiv.style.setProperty('--num-columns', 'repeat(' + this.itemsPerLine + ', 1fr)');
         }
 
         let displayedEntries = [...this.mainMap.entries()].map(e => new MapEntry(e[0], e[1]) );

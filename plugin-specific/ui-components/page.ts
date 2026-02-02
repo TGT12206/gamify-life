@@ -2,8 +2,8 @@ import { GamifyLifeView } from "./gamify-life-view";
 
 export class PageInstance {
     constructor(
-        public pageData: any,
-        public pageLoader: PageLoader
+        public pageType: string,
+        public pageData: any
     ) {}
 }
 

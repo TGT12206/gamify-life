@@ -47,7 +47,6 @@ export default class GamifyLife extends Plugin {
 			const ext = tFile.extension;
 			if (MediaRenderer.isValid(ext)) {
 				this.life.ChangeMediaPath(oldPath, file.path);
-				this.mediaRenderer.changePath(oldPath, file.path);
 			}
 			await this.savePluginData()
 		}));
@@ -60,7 +59,6 @@ export default class GamifyLife extends Plugin {
 			const ext = tFile.extension;
 			if (MediaRenderer.isValid(ext)) {
 				this.life.DeleteMediaPath(file.path);
-				this.mediaRenderer.forgetPath(file.path);
 			}
 			await this.savePluginData()
 		}));
